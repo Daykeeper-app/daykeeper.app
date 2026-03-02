@@ -10,9 +10,6 @@ import { API_URL } from "@/config"
 
 export default function NotificationsPage() {
   const router = useRouter()
-  const [sessionNewIds, setSessionNewIds] = useState<Set<string>>(
-    () => new Set()
-  )
   const [isPrivate, setIsPrivate] = useState(false)
   const {
     items,
@@ -46,8 +43,7 @@ export default function NotificationsPage() {
     }
   }, [])
 
-  const displayUnreadCount =
-    sessionNewIds.size > 0 ? sessionNewIds.size : unreadCount
+  const displayUnreadCount = unreadCount
 
   const unreadIds = useMemo(
     () => items.filter((it) => !it.read).map((it) => it._id),
@@ -56,19 +52,8 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     if (!unreadIds.length) return
-
-    const nextIds = unreadIds.filter((id) => !sessionNewIds.has(id))
-    if (!nextIds.length) return
-
-    setSessionNewIds((prev) => {
-      const next = new Set(prev)
-      nextIds.forEach((id) => next.add(id))
-      return next
-    })
-
-    // Mark as read for the next visit, but keep the "new" badge this session.
-    markRead(nextIds)
-  }, [markRead, sessionNewIds, unreadIds])
+    markRead(unreadIds)
+  }, [markRead, unreadIds])
 
   return (
     <main className="pb-20 lg:pb-0">
@@ -116,7 +101,7 @@ export default function NotificationsPage() {
           error={error}
           onLoadMore={loadMore}
           onRetry={reload}
-          sessionNewIds={sessionNewIds}
+          sessionNewIds={new Set(unreadIds)}
         />
       </div>
     </main>
