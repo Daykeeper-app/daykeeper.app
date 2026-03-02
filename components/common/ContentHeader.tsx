@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Clock, MoreHorizontal, Pencil } from "lucide-react"
 import PrivacyChip from "@/components/common/PrivacyChip"
+import { resolveProfilePictureUrl } from "@/lib/media"
 
 const AVATAR_FALLBACK = "/avatar-placeholder.png"
 
@@ -46,7 +47,7 @@ export default function ContentHeader({
   const menuRef = useRef<HTMLDivElement | null>(null)
   const [menuOpen, setMenuOpen] = useState(false)
 
-  const avatarSrc = user?.profile_picture?.url || AVATAR_FALLBACK
+  const avatarSrc = resolveProfilePictureUrl(user, AVATAR_FALLBACK)
   const displayName =
     user?.displayName ||
     user?.display_name ||

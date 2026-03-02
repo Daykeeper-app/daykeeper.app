@@ -10,9 +10,10 @@ import RichText from "@/components/common/RichText"
 
 type Props = {
   post: FeedPost
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
 }
 
-export default function PostDetailCard({ post }: Props) {
+export default function PostDetailCard({ post, onRefreshMedia }: Props) {
   // like state
   const [liked, setLiked] = useState(!!post.userLiked)
   const [likesCount, setLikesCount] = useState<number>(post.likes ?? 0)
@@ -59,7 +60,11 @@ export default function PostDetailCard({ post }: Props) {
             <RichText text={String(post.content || "")} />
           </p>
 
-          <FeedPostMediaStrip media={post.media} />
+          <FeedPostMediaStrip
+            media={post.media}
+            onRefreshMedia={onRefreshMedia}
+            entityKey={`post-detail:${post.id}`}
+          />
         </div>
 
         {/* actions */}

@@ -136,7 +136,7 @@ export default function PostPage() {
             </div>
 
             {/* content-only card */}
-            <PostDetailCard post={post} />
+            <PostDetailCard post={post} onRefreshMedia={q.refetch} />
 
             <CommentsSection postId={post.id} />
 

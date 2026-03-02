@@ -14,6 +14,7 @@ export default function UserDayPosts({
   onLoadMore,
   pagination,
   onCollapse,
+  onRefreshMedia,
 }: {
   posts: any[]
   hasMore?: boolean
@@ -21,6 +22,7 @@ export default function UserDayPosts({
   onLoadMore?: () => void
   pagination?: PaginationMeta
   onCollapse?: () => void
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
 }) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -80,6 +82,7 @@ export default function UserDayPosts({
             userCommented: !!p.userCommented && p.userCommented !== false,
           }}
           isLast={idx === posts.length - 1}
+          onRefreshMedia={onRefreshMedia}
         />
       ))}
 

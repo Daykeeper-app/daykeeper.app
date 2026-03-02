@@ -6,10 +6,11 @@
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { AVATAR_FALLBACK } from "@/components/Search/searchUtils"
+import { resolveProfilePictureUrl } from "@/lib/media"
 
 export default function SearchUserResultRow({ user }: { user: any }) {
   const router = useRouter()
-  const avatar = user?.profile_picture?.url || AVATAR_FALLBACK
+  const avatar = resolveProfilePictureUrl(user, AVATAR_FALLBACK)
   const title = user?.displayName || user?.username || "User"
   const subtitle = [user?.username ? `@${user.username}` : "", user?.bio || ""]
     .filter(Boolean)

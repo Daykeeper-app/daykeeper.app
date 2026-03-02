@@ -10,12 +10,14 @@ export default function SearchResultsList({
   loadingMore,
   hasMore,
   onLoadMore,
+  onRefreshMedia,
 }: {
   items: any[]
   type: SearchType
   loadingMore: boolean
   hasMore: boolean
   onLoadMore: () => void
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
 }) {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
@@ -43,6 +45,7 @@ export default function SearchResultsList({
         hasMore={hasMore}
         loadingMore={loadingMore}
         onLoadMore={onLoadMore}
+        onRefreshMedia={onRefreshMedia}
       />
 
       {loadingMore ? (

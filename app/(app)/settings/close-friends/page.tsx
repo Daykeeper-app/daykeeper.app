@@ -10,6 +10,7 @@ import { API_URL } from "@/config"
 import { useCloseFriends } from "@/hooks/useCloseFriends"
 import FormAlert from "@/components/Form/FormAlert"
 import { AVATAR_FALLBACK } from "@/components/Search/searchUtils"
+import { resolveProfilePictureUrl } from "@/lib/media"
 import RichText from "@/components/common/RichText"
 
 export default function CloseFriendsPage() {
@@ -153,7 +154,7 @@ export default function CloseFriendsPage() {
               <div className="divide-y divide-(--dk-ink)/10">
                 {items.map((friend) => {
                   const avatar =
-                    friend?.profile_picture?.url || AVATAR_FALLBACK
+                    resolveProfilePictureUrl(friend, AVATAR_FALLBACK)
                   const title =
                     friend?.displayName || friend?.username || "User"
                   const subtitle =

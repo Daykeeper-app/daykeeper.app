@@ -22,7 +22,13 @@ function formatPostedAt(s?: string) {
   return `${time} · ${dd}/${mm}/${yyyy}`
 }
 
-export default function SearchPostResultCard({ post }: { post: any }) {
+export default function SearchPostResultCard({
+  post,
+  onRefreshMedia,
+}: {
+  post: any
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
+}) {
   const router = useRouter()
 
   const postId = useMemo(() => post?.id || post?._id, [post])
@@ -108,7 +114,11 @@ export default function SearchPostResultCard({ post }: { post: any }) {
         <RichText text={String(content || "")} />
       </p>
 
-      <FeedPostMediaStrip media={post?.media || []} />
+      <FeedPostMediaStrip
+        media={post?.media || []}
+        onRefreshMedia={onRefreshMedia}
+        entityKey={`search-post:${postId}`}
+      />
 
       {/* like/comment row (same behavior as your FeedPostItem) */}
       <div className="mt-3 flex items-center gap-6 text-(--dk-slate)">

@@ -48,7 +48,18 @@ export type FeedUserDay = {
 export type FeedMedia = {
   _id: string
   type: "image" | "video" | string
-  url: string
+  url?: string
+  urls?: {
+    main?: string
+    thumb?: string
+    preview?: string
+    poster?: string
+    hls?: string
+  } | null
+  thumbnailUrl?: string
+  thumbUrl?: string
+  imageUrl?: string
+  videoUrl?: string
   title?: string
 }
 
@@ -99,6 +110,11 @@ export function normalizeFeedPayload(json: any): FeedUserDay[] {
                       _id: String(m._id ?? ""),
                       type: m.type,
                       url: m.url,
+                      urls: m.urls ?? null,
+                      thumbnailUrl: m.thumbnailUrl,
+                      thumbUrl: m.thumbUrl,
+                      imageUrl: m.imageUrl,
+                      videoUrl: m.videoUrl,
                       title: m.title,
                     }))
                   : [],

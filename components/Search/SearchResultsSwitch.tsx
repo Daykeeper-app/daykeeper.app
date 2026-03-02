@@ -15,18 +15,24 @@ export default function SearchResultsSwitch({
   hasMore,
   loadingMore,
   onLoadMore,
+  onRefreshMedia,
 }: {
   type: SearchType
   items: any[]
   hasMore: boolean
   loadingMore: boolean
   onLoadMore: () => void
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
 }) {
   if (type === "Post") {
     return (
       <div className="space-y-1 px-4 pb-6 sm:px-5">
         {items.map((p: any) => (
-          <SearchPostResultCard key={String(p?._id || p?.id)} post={p} />
+          <SearchPostResultCard
+            key={String(p?._id || p?.id)}
+            post={p}
+            onRefreshMedia={onRefreshMedia}
+          />
         ))}
       </div>
     )

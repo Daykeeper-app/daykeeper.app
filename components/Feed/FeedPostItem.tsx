@@ -25,9 +25,10 @@ type Props = {
   post: any
   isLast: boolean
   isOwner?: boolean
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
 }
 
-export default function FeedPostItem({ post, isLast }: Props) {
+export default function FeedPostItem({ post, isLast, onRefreshMedia }: Props) {
   const isOwner = useMemo(() => post?.isOwner, [post?.isOwner])
 
   const [liked, setLiked] = useState(!!post.userLiked)
@@ -213,7 +214,11 @@ export default function FeedPostItem({ post, isLast }: Props) {
           <RichText text={String(post.content || "")} />
         </p>
 
-        <FeedPostMediaStrip media={post.media} />
+        <FeedPostMediaStrip
+          media={post.media}
+          onRefreshMedia={onRefreshMedia}
+          entityKey={`feed-post:${post.id}`}
+        />
 
         <div className="mt-3 flex items-center gap-6 text-(--dk-slate)">
           <button

@@ -49,6 +49,7 @@ export function useProfileDay(username: string, dateParam: string | null) {
     collapseNotes,
     collapseEvents,
     collapsePosts,
+    reloadAll,
   } = useUserDay(username, safeDateParam) as any
 
   return {
@@ -89,5 +90,6 @@ export function useProfileDay(username: string, dateParam: string | null) {
     collapseNotes,
     collapseEvents,
     collapsePosts,
+    reloadAll,
   }
 }

@@ -10,17 +10,20 @@ import BlockUserModal from "../common/BlockUserModal"
 import ReportEntityModal from "@/components/common/ReportEntityModal"
 import { useRouter } from "next/navigation"
 import { toDayParam } from "@/lib/date"
+import { resolveProfilePictureUrl } from "@/lib/media"
 const AVATAR_FALLBACK = "/avatar-placeholder.png"
 
 export default function FeedUserDay({
   userDay,
   selectedDate,
+  onRefreshMedia,
 }: {
   userDay: any
   selectedDate: any
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
 }) {
   const router = useRouter()
-  const avatarSrc = userDay.user_info.profile_picture?.url || AVATAR_FALLBACK
+  const avatarSrc = resolveProfilePictureUrl(userDay.user_info, AVATAR_FALLBACK)
   const username = userDay.user_info.username
   const displayName = userDay?.user_info?.displayName
 
@@ -169,6 +172,7 @@ export default function FeedUserDay({
                 key={item.id}
                 post={item}
                 isLast={idx === items.length - 1}
+                onRefreshMedia={onRefreshMedia}
               />
             ) : (
               <FeedUserDayItemRow

@@ -4,11 +4,19 @@ import { useEffect, useRef } from "react"
 import Image from "next/image"
 import { X, ChevronLeft, ChevronRight } from "lucide-react"
 import type { FeedMedia } from "@/lib/feedTypes"
+import {
+  resolveMainMediaUrl,
+  resolvePlayableVideoUrl,
+  resolveThumbMediaUrl,
+} from "@/lib/media"
+import { useMediaUrlRecovery } from "@/hooks/useMediaUrlRecovery"
 
 type Props = {
   open: boolean
   media: FeedMedia[]
   index: number
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
+  entityKey?: string
   onClose: () => void
   onChangeIndex: (next: number) => void
 }
@@ -17,11 +25,21 @@ export default function MediaLightbox({
   open,
   media,
   index,
+  onRefreshMedia,
+  entityKey = "media-lightbox",
   onClose,
   onChangeIndex,
 }: Props) {
   const count = media.length
   const item = media[index]
+  const rawUrl =
+    item?.type === "video" ? resolvePlayableVideoUrl(item) : resolveMainMediaUrl(item)
+  const poster = resolveThumbMediaUrl(item)
+  const recovery = useMediaUrlRecovery({
+    url: rawUrl,
+    onRefresh: onRefreshMedia,
+    entityKey: `${entityKey}:${item?._id || index}`,
+  })
 
   // --- swipe state ---
   const startX = useRef<number | null>(null)
@@ -159,21 +177,42 @@ export default function MediaLightbox({
           <div className="relative w-full overflow-hidden rounded-2xl bg-black">
             <div className="relative aspect-4/3 sm:aspect-video">
               {item.type === "video" ? (
-                <video
-                  className="absolute inset-0 h-full w-full object-contain"
-                  src={item.url}
-                  controls
-                  autoPlay
-                />
+                recovery.src ? (
+                  <video
+                    className="absolute inset-0 h-full w-full object-contain"
+                    src={recovery.src}
+                    poster={poster || undefined}
+                    controls
+                    autoPlay
+                    onLoadedData={recovery.onLoad}
+                    onError={() => {
+                      void recovery.onError()
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-sm text-white/70">
+                    Video unavailable
+                  </div>
+                )
               ) : (
-                <Image
-                  src={item.url}
-                  alt={item.title || "Media"}
-                  fill
-                  className="object-contain"
-                  sizes="(max-width: 768px) 100vw, 1000px"
-                  priority
-                />
+                recovery.src ? (
+                  <Image
+                    src={recovery.src}
+                    alt={item.title || "Media"}
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 1000px"
+                    priority
+                    onLoad={recovery.onLoad}
+                    onError={() => {
+                      void recovery.onError()
+                    }}
+                  />
+                ) : (
+                  <div className="absolute inset-0 grid place-items-center text-sm text-white/70">
+                    Media unavailable
+                  </div>
+                )
               )}
             </div>
           </div>

@@ -19,6 +19,7 @@ type Props = {
 
   error?: string | null
   onRetry?: () => void
+  onRefreshMedia?: (() => void | Promise<unknown>) | null
 }
 
 export default function FeedTimeline({
@@ -30,6 +31,7 @@ export default function FeedTimeline({
   onLoadMore,
   error,
   onRetry,
+  onRefreshMedia,
 }: Props) {
   const LANE_X = "1.75rem"
   const LANE_RIGHT = "1rem"
@@ -70,7 +72,11 @@ export default function FeedTimeline({
         <div className="space-y-8 py-5">
           {data.map((userDay, idx) => (
             <div key={userDay.userId}>
-              <FeedUserDay userDay={userDay} selectedDate={selectedDate} />
+              <FeedUserDay
+                userDay={userDay}
+                selectedDate={selectedDate}
+                onRefreshMedia={onRefreshMedia}
+              />
               {idx < data.length - 1 ? (
                 <div className="mx-4 sm:mx-6 mt-4 h-px bg-(--dk-ink)/10" />
               ) : null}

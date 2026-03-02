@@ -10,6 +10,7 @@ import { useMe } from "@/lib/useMe"
 import { useCommentReplies } from "@/hooks/useCommentReplies"
 import RichText from "@/components/common/RichText"
 import RichTextarea from "@/components/common/RichTextarea"
+import { resolveProfilePictureUrl } from "@/lib/media"
 
 const AVATAR_FALLBACK = "/avatar-placeholder.png"
 
@@ -29,7 +30,7 @@ function formatRelative(dateStr: string) {
 }
 
 export default function CommentItem({ c }: { c: PostComment }) {
-  const avatar = c.user?.profile_picture?.url || AVATAR_FALLBACK
+  const avatar = resolveProfilePictureUrl(c.user, AVATAR_FALLBACK)
   const handle = c.user?.username ? `@${c.user.username}` : ""
   const me = useMe()
   const isOwner = !!me?._id && me._id === c.user?._id
@@ -359,7 +360,7 @@ function ReplyItem({ reply }: { reply: PostComment }) {
   return (
     <div className="flex items-start gap-2">
       <Image
-        src={reply.user?.profile_picture?.url || AVATAR_FALLBACK}
+        src={resolveProfilePictureUrl(reply.user, AVATAR_FALLBACK)}
         alt={reply.user?.username || "User"}
         width={28}
         height={28}

@@ -9,6 +9,7 @@ import { useUserProfile } from "@/hooks/useUserProfile"
 import { useUserFollows } from "@/hooks/useUserFollows"
 import FormAlert from "@/components/Form/FormAlert"
 import { AVATAR_FALLBACK } from "@/components/Search/searchUtils"
+import { resolveProfilePictureUrl } from "@/lib/media"
 import RichText from "@/components/common/RichText"
 
 function normalizeUsername(param: unknown) {
@@ -124,7 +125,7 @@ export default function FollowersPage() {
                 ) : (
                   <div className="divide-y divide-(--dk-ink)/10">
                     {items.map((user) => {
-                      const avatar = user?.profile_picture?.url || AVATAR_FALLBACK
+                      const avatar = resolveProfilePictureUrl(user, AVATAR_FALLBACK)
                       const title = user?.displayName || user?.username || "User"
                       const subtitle =
                         [user?.username ? `@${user.username}` : "", user?.bio]

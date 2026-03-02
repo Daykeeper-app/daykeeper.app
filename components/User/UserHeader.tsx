@@ -17,12 +17,13 @@ import { API_URL } from "@/config"
 import { useRouter } from "next/navigation"
 import UserActionsMenu from "@/components/User/UserActionsMenu"
 import RichText from "@/components/common/RichText"
+import { resolveProfilePictureUrl } from "@/lib/media"
 
 const AVATAR_FALLBACK = "/avatar-placeholder.png"
 
 export default function ProfileHeader({ user }: { user: any }) {
   const router = useRouter()
-  const avatar = user?.profile_picture?.url || AVATAR_FALLBACK
+  const avatar = resolveProfilePictureUrl(user, AVATAR_FALLBACK)
 
   const currentStreak = user?.currentStreak ?? user?.currentStrike ?? 0
   const maxStreak = user?.maxStreak ?? user?.maxStrike ?? 0

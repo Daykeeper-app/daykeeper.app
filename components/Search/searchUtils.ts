@@ -1,4 +1,9 @@
 import type { SearchType } from "@/hooks/useSearch"
+import {
+  resolveMainMediaUrl,
+  resolveProfilePictureUrl,
+  resolveThumbMediaUrl,
+} from "@/lib/media"
 
 export const AVATAR_FALLBACK = "/avatar-placeholder.png"
 
@@ -27,15 +32,15 @@ export function getSubtitle(item: any, type: SearchType) {
 }
 
 export function getAvatar(item: any, type: SearchType) {
-  if (type === "User") return item?.profile_picture?.url || AVATAR_FALLBACK
-  return item?.user_info?.profile_picture?.url || AVATAR_FALLBACK
+  if (type === "User") return resolveProfilePictureUrl(item, AVATAR_FALLBACK)
+  return resolveProfilePictureUrl(item?.user_info, AVATAR_FALLBACK)
 }
 
 export function pickThumb(item: any) {
   const arr = Array.isArray(item?.media) ? item.media : []
   const first = arr[0]
   if (!first) return null
-  return first?.thumbnailUrl || first?.thumbUrl || first?.url || null
+  return resolveThumbMediaUrl(first) || resolveMainMediaUrl(first) || null
 }
 
 export function getHref(item: any, type: SearchType) {

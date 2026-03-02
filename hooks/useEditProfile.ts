@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 
 import type { ApiAuthUser } from "@/lib/types/edit_profile"
+import { resolveProfilePictureUrl } from "@/lib/media"
 import {
   formDataHasAnyField,
   readJsonSafe,
@@ -40,8 +41,8 @@ export function useEditProfile() {
   const serverBio = useMemo(() => String(user?.bio || ""), [user?.bio])
   const serverTZ = useMemo(() => String(user?.timeZone || ""), [user?.timeZone])
   const serverAvatarUrl = useMemo(
-    () => String(user?.profile_picture?.url || ""),
-    [user?.profile_picture?.url]
+    () => resolveProfilePictureUrl(user, ""),
+    [user]
   )
 
   // draft

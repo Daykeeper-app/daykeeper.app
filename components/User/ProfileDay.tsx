@@ -75,6 +75,7 @@ export default function ProfileDaySections({ username, className }: Props) {
     collapseNotes,
     collapseEvents,
     collapsePosts,
+    reloadAll,
   } = useProfileDay(username, urlDateParam)
 
   const setDate = useCallback(
@@ -260,6 +261,7 @@ export default function ProfileDaySections({ username, className }: Props) {
                   loadingMore={loadingMorePosts}
                   onLoadMore={loadMorePosts}
                   onCollapse={collapsePosts}
+                  onRefreshMedia={reloadAll}
                 />
               </UserDaySection>
             </>

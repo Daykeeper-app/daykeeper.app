@@ -15,6 +15,7 @@ import PrivacyPicker, {
   type PrivacyValue,
 } from "@/components/common/PrivacyPicker"
 import EditMediaDropzone from "@/components/Post/Edit/EditMediaDropzone"
+import { resolveMainMediaUrl } from "@/lib/media"
 
 const MAX_MEDIA = 5
 
@@ -73,7 +74,7 @@ export default function EditPostPage() {
       .filter(Boolean)
       .map((m: any) => ({
         _id: String(m._id),
-        url: String(m.url || ""),
+        url: String(resolveMainMediaUrl(m) || ""),
         type: m.type === "video" ? "video" : "image",
       }))
       .filter((m) => m._id && m.url)

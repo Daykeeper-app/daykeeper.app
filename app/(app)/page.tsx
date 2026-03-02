@@ -109,6 +109,7 @@ function FeedPageInner() {
             onLoadMore={loadMore}
             error={error}
             onRetry={loadMore}
+            onRefreshMedia={reload}
           />
         </div>
       </main>
