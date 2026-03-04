@@ -11,7 +11,7 @@ type ReportEntityModalProps = {
   onClose: () => void
   onReported?: () => void
 
-  entityLabel: string // "post" | "note" | "comment" | "user" | etc
+  entityLabel: string // "post" | "comment" | "user" | etc
   titleCase?: boolean
   entityId: string
 

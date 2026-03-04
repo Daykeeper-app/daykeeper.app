@@ -34,7 +34,6 @@ export function getTitle(item: any, type: SearchType) {
   if (type === "User") return item?.displayName || item?.username || "User"
   if (type === "Post") return item?.data || "Post"
   if (type === "Event") return item?.title || item?.name || "Event"
-  if (type === "Note") return item?.title || item?.data || "Note"
   if (type === "Task") return item?.title || item?.data || "Task"
   return "Result"
 }
@@ -77,7 +76,6 @@ export function getHref(item: any, type: SearchType) {
   if (!id) return null
   if (type === "Post") return `/post/${encodeURIComponent(id)}`
   if (type === "Event") return `/event/${encodeURIComponent(id)}`
-  if (type === "Note") return `/note/${encodeURIComponent(id)}`
   if (type === "Task") return `/task/${encodeURIComponent(id)}`
   return null
 }

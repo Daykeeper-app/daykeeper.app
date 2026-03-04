@@ -1,12 +1,12 @@
 // =====================================
 // FILE: components/search/SearchDayKindRow.tsx
-// Note/Event/Task single result row with: ContentHeader (user) + UserDayListRow (item)
+// Event/Task single result row with: ContentHeader (user) + UserDayListRow (item)
 // =====================================
 "use client"
 
 import { useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { StickyNote, CalendarDays, ClipboardList } from "lucide-react"
+import { CalendarDays, ClipboardList } from "lucide-react"
 
 import ContentHeader from "@/components/common/ContentHeader"
 import UserDayListRow from "@/components/UserDay/UserDayListRow"
@@ -59,19 +59,12 @@ function formatTime(iso?: string) {
   return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
 }
 
-function leftIconFor(type: "Note" | "Event" | "Task") {
-  if (type === "Note") return <StickyNote size={18} />
+function leftIconFor(type: "Event" | "Task") {
   if (type === "Event") return <CalendarDays size={18} />
   return <ClipboardList size={22} />
 }
 
-function titleFor(item: any, type: "Note" | "Event" | "Task") {
-  if (type === "Note")
-    return (
-      <span className="whitespace-pre-wrap">
-        {item?.text ?? item?.data ?? ""}
-      </span>
-    )
+function titleFor(item: any, type: "Event" | "Task") {
   if (type === "Event")
     return (
       item?.title ||
@@ -83,7 +76,7 @@ function titleFor(item: any, type: "Note" | "Event" | "Task") {
   return item?.title || item?.name || "Task"
 }
 
-function subtitleFor(item: any, type: "Note" | "Event" | "Task") {
+function subtitleFor(item: any, type: "Event" | "Task") {
   if (type !== "Event") return null
   return (
     item?.description ||
@@ -95,10 +88,9 @@ function subtitleFor(item: any, type: "Note" | "Event" | "Task") {
   )
 }
 
-function hrefFor(item: any, type: "Note" | "Event" | "Task") {
+function hrefFor(item: any, type: "Event" | "Task") {
   if (!item?._id) return null
   const id = encodeURIComponent(String(item._id))
-  if (type === "Note") return `/day/notes/${id}`
   if (type === "Event") return `/day/events/${id}`
   return `/day/tasks/${id}`
 }
@@ -107,7 +99,7 @@ export default function SearchDayKindRow({
   type,
   item,
 }: {
-  type: "Note" | "Event" | "Task"
+  type: "Event" | "Task"
   item: any
 }) {
   const router = useRouter()

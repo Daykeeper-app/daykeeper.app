@@ -7,7 +7,6 @@ import { createPortal } from "react-dom"
 import {
   CalendarPlus,
   CheckSquare2,
-  FileText,
   PlusSquare,
   SquarePen,
   X,
@@ -28,12 +27,6 @@ const CREATE_ITEMS: CreateItem[] = [
     label: "Post",
     icon: SquarePen,
     subtitle: "Share on timeline",
-  },
-  {
-    href: "/day/notes/create",
-    label: "Note",
-    icon: FileText,
-    subtitle: "Write a note",
   },
   {
     href: "/day/events/create",

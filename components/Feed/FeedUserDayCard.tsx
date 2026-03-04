@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { CheckSquare, Calendar, List, Clock } from "lucide-react"
+import { CheckSquare, Calendar, Clock } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toDayParam } from "@/lib/date"
 
@@ -19,7 +19,6 @@ export default function FeedUserDayCard({
       entries: userDay?.postsCount || 0,
       tasksUpdated: userDay?.tasksCount || 0,
       events: userDay?.eventsCount || 0,
-      notes: userDay?.notesCount || 0,
       lastUpdateTime: userDay?.lastPostTime || "12:00",
     }
     return obj
@@ -27,7 +26,6 @@ export default function FeedUserDayCard({
     userDay?.postsCount,
     userDay?.tasksCount,
     userDay?.eventsCount,
-    userDay?.notesCount,
     userDay?.lastPostTime,
   ])
 
@@ -81,16 +79,6 @@ export default function FeedUserDayCard({
               {dayMeta.events}
             </span>{" "}
             events
-          </span>
-
-          <span className="h-1 w-1 rounded-full bg-(--dk-ink)/25" />
-
-          <span className="inline-flex items-center gap-1.5">
-            <List size={14} />
-            <span className="font-semibold text-(--dk-ink)">
-              {dayMeta.notes}
-            </span>{" "}
-            notes
           </span>
 
           {dayMeta.lastUpdateTime ? (

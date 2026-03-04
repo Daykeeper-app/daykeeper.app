@@ -21,32 +21,26 @@ export function useProfileDay(username: string, dateParam: string | null) {
     stats,
 
     tasks,
-    notes,
     events,
     posts,
 
     tasksMeta,
-    notesMeta,
     eventsMeta,
     postsMeta,
 
     loadMoreTasks,
-    loadMoreNotes,
     loadMoreEvents,
     loadMorePosts,
 
     hasMoreTasks,
-    hasMoreNotes,
     hasMoreEvents,
     hasMorePosts,
 
     loadingMoreTasks,
-    loadingMoreNotes,
     loadingMoreEvents,
     loadingMorePosts,
 
     collapseTasks,
-    collapseNotes,
     collapseEvents,
     collapsePosts,
     reloadAll,
@@ -62,32 +56,26 @@ export function useProfileDay(username: string, dateParam: string | null) {
     stats,
 
     tasks: tasks ?? [],
-    notes: notes ?? [],
     events: events ?? [],
     posts: posts ?? [],
 
     tasksMeta,
-    notesMeta,
     eventsMeta,
     postsMeta,
 
     loadMoreTasks,
-    loadMoreNotes,
     loadMoreEvents,
     loadMorePosts,
 
     hasMoreTasks,
-    hasMoreNotes,
     hasMoreEvents,
     hasMorePosts,
 
     loadingMoreTasks,
-    loadingMoreNotes,
     loadingMoreEvents,
     loadingMorePosts,
 
     collapseTasks,
-    collapseNotes,
     collapseEvents,
     collapsePosts,
     reloadAll,

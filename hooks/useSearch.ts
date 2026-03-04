@@ -8,7 +8,7 @@ import { useInfiniteQuery } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 
-export type SearchType = "Post" | "User" | "Event" | "Note" | "Task"
+export type SearchType = "Post" | "User" | "Event" | "Task"
 export type SearchOrder = "recent" | "relevant"
 export type FollowingScope = "friends" | "following" | "followers"
 

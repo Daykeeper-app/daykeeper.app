@@ -1,6 +1,6 @@
 "use client"
 
-import { Search, Bell, Plus, CalendarDays, FileText, CheckSquare2, EyeOff } from "lucide-react"
+import { Search, Bell, Plus, CalendarDays, CheckSquare2, EyeOff } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useNotifications } from "@/hooks/useNotifications"
@@ -8,7 +8,6 @@ import { useNotifications } from "@/hooks/useNotifications"
 const QUICK_ACTIONS = [
   { label: "Post", icon: Plus, href: "/post/create" },
   { label: "Event", icon: CalendarDays, href: "/day/events/create" },
-  { label: "Note", icon: FileText, href: "/day/notes/create" },
   { label: "Task", icon: CheckSquare2, href: "/day/tasks/create" },
 ] as const
 
@@ -104,7 +103,7 @@ export default function RightPanel() {
             <h2 className="text-sm font-semibold text-(--dk-ink)">Quick create</h2>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 p-3">
+          <div className="space-y-1 p-3">
             {QUICK_ACTIONS.map((action) => {
               const Icon = action.icon
               const href =
@@ -115,12 +114,14 @@ export default function RightPanel() {
                 <button
                   key={action.label}
                   onClick={() => router.push(href)}
-                  className="flex h-10 items-center gap-2 rounded-lg px-3 text-sm font-medium text-(--dk-ink) transition hover:bg-(--dk-mist)/40"
+                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left transition hover:bg-(--dk-mist)/40"
                 >
                   <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-(--dk-mist)/55 text-(--dk-sky)">
                     <Icon size={14} />
                   </span>
-                  {action.label}
+                  <span className="text-sm font-medium text-(--dk-ink)">
+                    {action.label}
+                  </span>
                 </button>
               )
             })}

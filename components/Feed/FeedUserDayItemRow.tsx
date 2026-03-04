@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { StickyNote, CalendarDays, ClipboardList, CheckSquare2, Square } from "lucide-react"
+import { CalendarDays, ClipboardList, CheckSquare2, Square } from "lucide-react"
 
 import type { FeedUserDayItem } from "@/lib/feedTypes"
 import UserDayListRow from "@/components/UserDay/UserDayListRow"
@@ -54,7 +54,6 @@ function formatEventTimeRange(startISO?: string, endISO?: string) {
 }
 
 function iconFor(type: FeedUserDayItem["type"]) {
-  if (type === "note") return <StickyNote size={18} />
   if (type === "event") return <CalendarDays size={18} />
   return <ClipboardList size={20} />
 }
@@ -71,7 +70,6 @@ export default function FeedUserDayItemRow({
   const href = useMemo(() => {
     const id = encodeURIComponent(String(item.id || ""))
     if (!id) return null
-    if (item.type === "note") return `/day/notes/${id}`
     if (item.type === "event") return `/day/events/${id}`
     if (item.type === "task") return `/day/tasks/${id}`
     return null
@@ -137,9 +135,7 @@ export default function FeedUserDayItemRow({
         : null
 
   const title =
-    item.type === "note"
-      ? item.text || ""
-      : item.type === "task"
+    item.type === "task"
         ? item.title || "Task"
         : (
             <span className="inline-flex items-center gap-2 min-w-0">

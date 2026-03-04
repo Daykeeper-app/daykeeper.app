@@ -57,7 +57,7 @@ export default function SearchResultsSwitch({
     )
   }
 
-  if (type === "Note" || type === "Event" || type === "Task") {
+  if (type === "Event" || type === "Task") {
     return (
       <div className="px-4 pb-6 sm:px-5">
         <SearchDayKindResults

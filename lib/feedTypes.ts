@@ -1,4 +1,4 @@
-export type FeedItemType = "post" | "note" | "task" | "event"
+export type FeedItemType = "post" | "task" | "event"
 
 export type FeedUserDayItem = {
   id: string
@@ -16,9 +16,6 @@ export type FeedUserDayItem = {
   userCommented?: any
   edited_at?: any
   isOwner?: boolean
-
-  // note fields
-  text?: string
 
   // task fields
   title?: string
@@ -38,7 +35,6 @@ export type FeedUserDay = {
   profile_picture?: { url?: string } | null
   user_info?: any
   postsCount?: number
-  notesCount?: number
   tasksCount?: number
   eventsCount?: number
   lastPostTime?: string
@@ -90,7 +86,7 @@ export function normalizeFeedPayload(json: any): FeedUserDay[] {
       ? u.data
           .map((p: any) => {
             const type = String(p?.type || "post").toLowerCase() as FeedItemType
-            if (!["post", "note", "task", "event"].includes(type)) return null
+            if (!["post", "task", "event"].includes(type)) return null
 
             const id = String(p?.id ?? p?._id ?? "")
             const base = {
@@ -127,13 +123,6 @@ export function normalizeFeedPayload(json: any): FeedUserDay[] {
               } as FeedUserDayItem
             }
 
-            if (type === "note") {
-              return {
-                ...base,
-                text: String(p?.text ?? p?.content ?? p?.data ?? ""),
-              } as FeedUserDayItem
-            }
-
             if (type === "task") {
               return {
                 ...base,
@@ -158,7 +147,6 @@ export function normalizeFeedPayload(json: any): FeedUserDay[] {
       user_info: u.user_info,
       postsCount: u.postsCount,
       eventsCount: u.eventsCount,
-      notesCount: u.notesCount,
       tasksCount: u.tasksCount,
       lastPostTime: u.lastPostTime,
       userId: String(u.userId ?? u._id ?? ""),

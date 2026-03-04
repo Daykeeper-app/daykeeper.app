@@ -9,7 +9,6 @@ import ProfileDaySkeleton from "@/components/User/ProfileDaySkeleton"
 
 import UserDaySection from "@/components/UserDay/UserDaySection"
 import UserDayTasks from "@/components/UserDay/UserDayTasks"
-import UserDayNotes from "@/components/UserDay/UserDayNotes"
 import UserDayEvents from "@/components/UserDay/UserDayEvents"
 import UserDayPosts from "@/components/UserDay/UserDayPosts"
 
@@ -47,32 +46,26 @@ export default function ProfileDaySections({ username, className }: Props) {
     canView,
 
     tasks,
-    notes,
     events,
     posts,
 
     tasksMeta,
-    notesMeta,
     eventsMeta,
     postsMeta,
 
     loadMoreTasks,
-    loadMoreNotes,
     loadMoreEvents,
     loadMorePosts,
 
     hasMoreTasks,
-    hasMoreNotes,
     hasMoreEvents,
     hasMorePosts,
 
     loadingMoreTasks,
-    loadingMoreNotes,
     loadingMoreEvents,
     loadingMorePosts,
 
     collapseTasks,
-    collapseNotes,
     collapseEvents,
     collapsePosts,
     reloadAll,
@@ -139,7 +132,7 @@ export default function ProfileDaySections({ username, className }: Props) {
       <button
         type="button"
         onClick={() => router.push(href)}
-        className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-(--dk-sky)/15 text-(--dk-sky) hover:bg-(--dk-sky)/25 transition"
+        className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-(--dk-sky)/15 text-(--dk-sky) transition hover:bg-(--dk-sky)/25"
         aria-label="Create new"
       >
         <Plus size={14} />
@@ -151,7 +144,6 @@ export default function ProfileDaySections({ username, className }: Props) {
   // Use real totals from API when available (posts totalCount too)
   const entriesCount =
     (stats?.tasksCount ?? tasks.length) +
-    (stats?.notesCount ?? notes.length) +
     (stats?.eventsCount ?? events.length) +
     (postsMeta?.totalCount ?? posts.length)
   const visibleEntriesCount = canView ? entriesCount : 0
@@ -208,25 +200,6 @@ export default function ProfileDaySections({ username, className }: Props) {
                   loadingMore={loadingMoreTasks}
                   onLoadMore={loadMoreTasks}
                   onCollapse={collapseTasks}
-                />
-              </UserDaySection>
-
-              <UserDaySection
-                title="Notes"
-                count={stats?.notesCount ?? 0}
-                action={
-                  isSelf
-                    ? addButton(`/day/notes/create?date=${dateParamForCreate}`)
-                    : undefined
-                }
-              >
-                <UserDayNotes
-                  notes={notes}
-                  pagination={notesMeta}
-                  hasMore={hasMoreNotes}
-                  loadingMore={loadingMoreNotes}
-                  onLoadMore={loadMoreNotes}
-                  onCollapse={collapseNotes}
                 />
               </UserDaySection>
 

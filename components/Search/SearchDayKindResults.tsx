@@ -25,7 +25,7 @@ export default function SearchDayKindResults({
   loadingMore,
   onLoadMore,
 }: {
-  type: "Note" | "Event" | "Task"
+  type: "Event" | "Task"
   items: any[]
   hasMore: boolean
   loadingMore: boolean

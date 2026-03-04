@@ -17,7 +17,7 @@ export default function SearchBar({
       <input
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Search posts, people, notes..."
+        placeholder="Search posts, people, events, tasks..."
         className="w-full bg-transparent text-sm text-(--dk-ink) outline-none placeholder:text-(--dk-slate)"
       />
       {loading ? (

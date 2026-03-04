@@ -5,7 +5,6 @@ import {
   Users,
   FileText,
   CalendarDays,
-  StickyNote,
   CheckSquare,
 } from "lucide-react"
 
@@ -13,7 +12,6 @@ function TypeIcon({ type }: { type: SearchType }) {
   if (type === "User") return <Users size={16} />
   if (type === "Post") return <FileText size={16} />
   if (type === "Event") return <CalendarDays size={16} />
-  if (type === "Note") return <StickyNote size={16} />
   return <CheckSquare size={16} />
 }
 
@@ -24,10 +22,10 @@ export default function SearchTypePills({
   value: SearchType
   onChange: (t: SearchType) => void
 }) {
-  const types: SearchType[] = ["Post", "User", "Event", "Note", "Task"]
+  const types: SearchType[] = ["Post", "User", "Event", "Task"]
 
   return (
-    <div className="grid w-full grid-cols-5 gap-2">
+    <div className="grid w-full grid-cols-4 gap-2">
       {types.map((t) => {
         const active = t === value
         return (

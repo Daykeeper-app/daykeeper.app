@@ -68,7 +68,7 @@ async function fetchUser(username: string) {
 }
 
 function makeDayEndpoint(
-  kind: "task" | "note" | "event",
+  kind: "task" | "event",
   username: string,
   dateParam: string
 ) {
@@ -77,9 +77,9 @@ function makeDayEndpoint(
   )}/${encodeURIComponent(dateParam)}`
 }
 
-// tasks/notes/events paged fetch (meta at top level, list at json.data)
+// tasks/events paged fetch (meta at top level, list at json.data)
 async function fetchPagedKind<T>(
-  kind: "task" | "note" | "event",
+  kind: "task" | "event",
   username: string,
   dateParam: string,
   page: number,
@@ -250,25 +250,6 @@ export function useUserDay(username: string, dateParam: string) {
     refetchOnWindowFocus: false,
   })
 
-  const notesQ: any = useInfiniteQuery({
-    queryKey: [...baseKey, "notes"],
-    enabled: enabled && canView,
-    initialPageParam: 1,
-    queryFn: ({ pageParam }) =>
-      fetchPagedKind<any>(
-        "note",
-        username,
-        dateParam,
-        Number(pageParam),
-        DEFAULT_PAGE_SIZE
-      ),
-    getNextPageParam: (lastPage, allPages) => {
-      const next = allPages.length + 1
-      return next <= lastPage.totalPages ? next : undefined
-    },
-    refetchOnWindowFocus: false,
-  })
-
   const eventsQ: any = useInfiniteQuery({
     queryKey: [...baseKey, "events"],
     enabled: enabled && canView,
@@ -305,30 +286,25 @@ export function useUserDay(username: string, dateParam: string) {
     userQ.isLoading ||
     (canView &&
       (tasksQ.isLoading ||
-        notesQ.isLoading ||
         eventsQ.isLoading ||
         postsQ.isLoading))
 
   const error =
     (userQ.error && safeApiMessage(userQ.error)) ||
     (canView && tasksQ.error && safeApiMessage(tasksQ.error)) ||
-    (canView && notesQ.error && safeApiMessage(notesQ.error)) ||
     (canView && eventsQ.error && safeApiMessage(eventsQ.error)) ||
     (canView && postsQ.error && safeApiMessage(postsQ.error)) ||
     null
 
   const tasks = flattenPagesUniqueById(tasksQ.data?.pages)
-  const notes = flattenPagesUniqueById(notesQ.data?.pages)
   const events = flattenPagesUniqueById(eventsQ.data?.pages)
   const posts = flattenPagesUniqueById(postsQ.data?.pages)
 
   const tasksMeta = lastMeta(tasksQ.data?.pages)
-  const notesMeta = lastMeta(notesQ.data?.pages)
   const eventsMeta = lastMeta(eventsQ.data?.pages)
   const postsMeta = lastMeta(postsQ.data?.pages)
 
   const stats = {
-    notesCount: notesMeta.totalCount ?? notes.length,
     tasksCount: tasksMeta.totalCount ?? tasks.length,
     eventsCount: eventsMeta.totalCount ?? events.length,
   }
@@ -342,12 +318,10 @@ export function useUserDay(username: string, dateParam: string) {
     stats,
 
     tasks,
-    notes,
     events,
     posts,
 
     tasksMeta,
-    notesMeta,
     eventsMeta,
     postsMeta,
 
@@ -355,11 +329,6 @@ export function useUserDay(username: string, dateParam: string) {
       if (tasksQ.isFetchingNextPage) return
       if (!tasksQ.hasNextPage) return
       return tasksQ.fetchNextPage()
-    },
-    loadMoreNotes: () => {
-      if (notesQ.isFetchingNextPage) return
-      if (!notesQ.hasNextPage) return
-      return notesQ.fetchNextPage()
     },
     loadMoreEvents: () => {
       if (eventsQ.isFetchingNextPage) return
@@ -373,20 +342,15 @@ export function useUserDay(username: string, dateParam: string) {
     },
 
     loadingMoreTasks: tasksQ.isFetchingNextPage,
-    loadingMoreNotes: notesQ.isFetchingNextPage,
     loadingMoreEvents: eventsQ.isFetchingNextPage,
     loadingMorePosts: postsQ.isFetchingNextPage,
 
     hasMoreTasks: !!tasksQ.hasNextPage,
-    hasMoreNotes: !!notesQ.hasNextPage,
     hasMoreEvents: !!eventsQ.hasNextPage,
     hasMorePosts: !!postsQ.hasNextPage,
 
     collapseTasks: () => {
       queryClient.removeQueries({ queryKey: [...baseKey, "tasks"] })
-    },
-    collapseNotes: () => {
-      queryClient.removeQueries({ queryKey: [...baseKey, "notes"] })
     },
     collapseEvents: () => {
       queryClient.removeQueries({ queryKey: [...baseKey, "events"] })
@@ -399,7 +363,6 @@ export function useUserDay(username: string, dateParam: string) {
       Promise.all([
         userQ.refetch(),
         tasksQ.refetch(),
-        notesQ.refetch(),
         eventsQ.refetch(),
         postsQ.refetch(),
       ]),

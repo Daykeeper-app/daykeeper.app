@@ -33,7 +33,6 @@ export default function FeedUserDay({
 
   const totalItems = Number(
     (userDay.postsCount ?? 0) +
-      (userDay.notesCount ?? 0) +
       (userDay.tasksCount ?? 0) +
       (userDay.eventsCount ?? 0),
   )

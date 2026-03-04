@@ -111,7 +111,7 @@ export default function EventPage() {
   return (
     <main className="pb-20 lg:pb-0">
       <div className="max-w-2xl mx-auto border-x border-(--dk-ink)/10 bg-(--dk-paper) min-h-screen">
-        {/* Sticky top header shell (same as Note/Post pages) */}
+        {/* Sticky top header shell (same as other detail pages) */}
         <div className="sticky top-0 bg-(--dk-paper)/95 backdrop-blur-md">
           <div className="h-1 w-full bg-(--dk-sky)/70" />
           <div className="px-4 py-3 flex items-center gap-3">
