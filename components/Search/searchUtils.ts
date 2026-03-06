@@ -7,16 +7,31 @@ import {
 
 export const AVATAR_FALLBACK = "/avatar-placeholder.png"
 
-function stableId(value: unknown): string | null {
+export function stableSearchId(value: unknown): string | null {
   if (typeof value === "string" || typeof value === "number") {
     const out = String(value).trim()
-    return out || null
+    return out && out !== "[object Object]" ? out : null
   }
   if (value && typeof value === "object") {
-    const obj = value as { $oid?: unknown; id?: unknown; _id?: unknown }
+    const obj = value as {
+      $oid?: unknown
+      id?: unknown
+      _id?: unknown
+      type?: unknown
+      data?: unknown
+      buffer?: unknown
+    }
     if (typeof obj.$oid === "string" || typeof obj.$oid === "number") {
       const out = String(obj.$oid).trim()
       if (out) return out
+    }
+    if (obj.type === "Buffer" && Array.isArray(obj.data)) {
+      const bytes = obj.data.filter((n) => Number.isFinite(n)) as number[]
+      if (bytes.length) {
+        return bytes
+          .map((n) => Number(n).toString(16).padStart(2, "0"))
+          .join("")
+      }
     }
     if (typeof obj.id === "string" || typeof obj.id === "number") {
       const out = String(obj.id).trim()
@@ -26,6 +41,11 @@ function stableId(value: unknown): string | null {
       const out = String(obj._id).trim()
       if (out) return out
     }
+    const nested =
+      stableSearchId(obj.id) ||
+      stableSearchId(obj._id) ||
+      stableSearchId(obj.buffer)
+    if (nested) return nested
   }
   return null
 }
@@ -68,14 +88,14 @@ export function pickThumb(item: any) {
 export function getHref(item: any, type: SearchType) {
   if (type === "User") {
     if (item?.username) return `/${encodeURIComponent(item.username)}`
-    const id = stableId(item?._id)
+    const id = stableSearchId(item?._id) || stableSearchId(item?.id)
     if (id) return `/${encodeURIComponent(id)}`
     return null
   }
-  const id = stableId(item?._id)
+  const id = stableSearchId(item?._id) || stableSearchId(item?.id)
   if (!id) return null
   if (type === "Post") return `/post/${encodeURIComponent(id)}`
-  if (type === "Event") return `/event/${encodeURIComponent(id)}`
-  if (type === "Task") return `/task/${encodeURIComponent(id)}`
+  if (type === "Event") return `/day/events/${encodeURIComponent(id)}`
+  if (type === "Task") return `/day/tasks/${encodeURIComponent(id)}`
   return null
 }

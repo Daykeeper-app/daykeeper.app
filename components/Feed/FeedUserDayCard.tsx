@@ -45,7 +45,7 @@ export default function FeedUserDayCard({
       <button
         type="button"
         onClick={openDay}
-        className="ml-7 w-[calc(100%-1.75rem)] cursor-pointer rounded-lg bg-(--dk-mist)/70 px-3 py-2 text-center transition hover:bg-(--dk-sky)/25"
+        className="ml-0 sm:ml-7 w-full sm:w-[calc(100%-1.75rem)] cursor-pointer rounded-lg bg-(--dk-mist)/70 px-3 py-2 text-center transition hover:bg-(--dk-sky)/25"
       >
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] text-(--dk-slate)">
           <span className="font-semibold tracking-[0.08em] text-(--dk-slate)">

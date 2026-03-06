@@ -1,4 +1,5 @@
 import { queryClient } from "@/lib/queryClient"
+import { normalizeBsonIds } from "@/lib/normalizeBson"
 
 let accessToken: string | null = null
 let refreshing: Promise<string | null> | null = null
@@ -104,6 +105,22 @@ function shouldUseBackgroundKeepalive(
   return bodySize <= KEEPALIVE_BODY_LIMIT_BYTES
 }
 
+function withNormalizedJson<T extends Response>(res: T): T {
+  return new Proxy(res, {
+    get(target, prop) {
+      if (prop === "json") {
+        return async () => {
+          const payload = await target.clone().json().catch(() => null)
+          return normalizeBsonIds(payload)
+        }
+      }
+      const value = Reflect.get(target, prop, target)
+      if (typeof value === "function") return value.bind(target)
+      return value
+    },
+  }) as T
+}
+
 // Use APi (ONLY for Post/Put/Delete) Use query for GET
 export async function apiFetch(url: string, init: RequestInit = {}) {
   const requestMethod = (init.method || "GET").toUpperCase()
@@ -126,7 +143,7 @@ export async function apiFetch(url: string, init: RequestInit = {}) {
   let res = await doFetch()
   if (res.status !== 401) {
     maybeResetCache(res)
-    return res
+    return withNormalizedJson(res)
   }
 
   const newToken = await refreshAccessToken()
@@ -144,7 +161,7 @@ export async function apiFetch(url: string, init: RequestInit = {}) {
 
   maybeResetCache(res)
 
-  return res
+  return withNormalizedJson(res)
 }
 
 export const authClient = { setAccessToken, getAccessToken }

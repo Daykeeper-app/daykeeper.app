@@ -66,9 +66,9 @@ export default function FeedUserDay({
   }, [])
 
   return (
-    <section className="relative px-3 sm:px-4">
+    <section className="relative px-2 sm:px-4">
       <div
-        className="group flex items-start gap-3 px-2 pb-3 cursor-pointer"
+        className="group flex items-start gap-3 px-1 sm:px-2 pb-3 cursor-pointer"
         onClick={() => router.push(`/${username}`)}
       >
         <Image
@@ -156,35 +156,39 @@ export default function FeedUserDay({
         </div>
       </div>
 
-      <div
-        style={{
-          marginLeft: "var(--lane-x)",
-          paddingRight: "var(--lane-right, 1rem)",
-        }}
-      >
+      <div className="pr-1 sm:ml-[var(--lane-x)] sm:pr-[var(--lane-right,1rem)]">
         <FeedUserDayCard userDay={userDay} selectedDate={selectedDate} />
 
         <div className="space-y-1">
-          {items.map((item: any, idx: any) =>
-            item?.type === "post" ? (
-              <FeedPostItem
-                key={item?.id ? `post-${item.id}` : `post-fallback-${idx}`}
-                post={item}
-                isLast={idx === items.length - 1}
-                onRefreshMedia={onRefreshMedia}
-              />
-            ) : (
-              <FeedUserDayItemRow
-                key={
-                  item?.id
-                    ? `${item.type}-${item.id}`
-                    : `${item?.type || "item"}-fallback-${idx}`
-                }
-                item={item}
-                isLast={idx === items.length - 1}
-              />
-            ),
-          )}
+          {items.map((item: any, idx: any) => (
+            <div
+              key={
+                item?.id
+                  ? `${item.type || "item"}-${item.id}`
+                  : `${item?.type || "item"}-fallback-${idx}`
+              }
+              className="border-b border-(--dk-ink)/10 pb-1 last:border-b-0 sm:border-b-0 sm:pb-0"
+            >
+              {item?.type === "post" ? (
+                <FeedPostItem
+                  key={item?.id ? `post-${item.id}` : `post-fallback-${idx}`}
+                  post={item}
+                  isLast={idx === items.length - 1}
+                  onRefreshMedia={onRefreshMedia}
+                />
+              ) : (
+                <FeedUserDayItemRow
+                  key={
+                    item?.id
+                      ? `${item.type}-${item.id}`
+                      : `${item?.type || "item"}-fallback-${idx}`
+                  }
+                  item={item}
+                  isLast={idx === items.length - 1}
+                />
+              )}
+            </div>
+          ))}
 
           {hasMoreItems ? (
             <button

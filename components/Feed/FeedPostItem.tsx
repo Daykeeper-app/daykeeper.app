@@ -105,14 +105,14 @@ export default function FeedPostItem({ post, isLast, onRefreshMedia }: Props) {
     <div className="relative">
       {/* dot */}
       <div
-        className="absolute top-5 h-2.5 w-2.5 rounded-full bg-(--dk-sky)"
+        className="absolute top-5 hidden h-2.5 w-2.5 rounded-full bg-(--dk-sky) sm:block"
         style={{ left: 0, transform: "translateX(-50%)" }}
       />
 
       {/* connector */}
       {!isLast ? (
         <div
-          className="absolute top-6 w-px bg-(--dk-sky)/40"
+          className="absolute top-6 hidden w-px bg-(--dk-sky)/40 sm:block"
           style={{
             left: 0,
             transform: "translateX(-50%)",
@@ -123,7 +123,7 @@ export default function FeedPostItem({ post, isLast, onRefreshMedia }: Props) {
 
       {/* card */}
       <div
-        className="ml-7 rounded-lg px-3 py-3 transition cursor-pointer hover:bg-(--dk-mist)/35"
+        className="ml-0 sm:ml-7 rounded-xl sm:rounded-lg px-2.5 sm:px-3 py-3 transition cursor-pointer hover:bg-(--dk-mist)/35 active:bg-(--dk-mist)/45"
         onClick={() => router.push(`/post/${post.id}`)}
       >
         {/* top row with menu */}

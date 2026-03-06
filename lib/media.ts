@@ -12,12 +12,45 @@ function pickString(values: unknown[]): string | null {
   return null
 }
 
-export function resolveMainMediaUrl(media: unknown): string | null {
+function pickProfilePictureCandidate(value: unknown): string | null {
+  if (typeof value === "string") {
+    const out = value.trim()
+    return out || null
+  }
+
+  if (!value || typeof value !== "object") return null
+
+  const v = toRecord(value)
+  const urls = toRecord(v.urls)
+
+  return pickString([
+    // New backend contract
+    urls.main,
+    v.url,
+    // Legacy/computed variants
+    urls.thumb,
+    urls.preview,
+    urls.poster,
+    v.avatarUrl,
+    v.avatar_url,
+    v.picture,
+    v.photoURL,
+    v.photoUrl,
+    v.profilePicture,
+    v.profile_picture,
+    v.profilePictureUrl,
+    v.profile_picture_url,
+  ])
+}
+
+export function getMainMediaUrl(media: unknown): string | null {
   const m = toRecord(media)
   const urls = toRecord(m.urls)
   return pickString([
+    // Contract-preferred order
     urls.main,
     m.url,
+    // Backward-compat fallback fields
     m.imageUrl,
     m.videoUrl,
     m.thumbnailUrl,
@@ -27,7 +60,7 @@ export function resolveMainMediaUrl(media: unknown): string | null {
   ])
 }
 
-export function resolveThumbMediaUrl(media: unknown): string | null {
+export function getThumbUrl(media: unknown): string | null {
   const m = toRecord(media)
   const urls = toRecord(m.urls)
   return pickString([
@@ -36,30 +69,72 @@ export function resolveThumbMediaUrl(media: unknown): string | null {
     urls.poster,
     m.thumbnailUrl,
     m.thumbUrl,
-    resolveMainMediaUrl(media),
+    getMainMediaUrl(media),
   ])
 }
 
-export function resolvePlayableVideoUrl(media: unknown): string | null {
+export function getHlsUrl(media: unknown): string | null {
   const m = toRecord(media)
   const urls = toRecord(m.urls)
-  return pickString([urls.hls, resolveMainMediaUrl(media)])
+  return pickString([urls.hls, getMainMediaUrl(media)])
 }
 
-export function resolveProfilePictureUrl(
+export function getProfilePictureUrl(
   userLike: unknown,
   fallback = "/avatar-placeholder.png",
 ): string {
   const source = toRecord(userLike)
-  const pic = toRecord(source.profile_picture ?? source.profilePicture)
-  const url = pickString([
-    toRecord(pic.urls).main,
-    pic.url,
+  const fromUser = toRecord(source.user)
+  const fromUserInfo = toRecord(source.user_info)
+  const fromAuthor = toRecord(source.author)
+  const fromOwner = toRecord(source.owner)
+
+  // Accept profile-picture fields from common API payload shapes.
+  const candidates: unknown[] = [
+    source.profile_picture,
+    source.profilePicture,
+    source.profile_picture_url,
+    source.profilePictureUrl,
+    source.avatar,
     source.avatarUrl,
-    source.imageUrl,
-  ])
-  return url || fallback
+    source.avatar_url,
+    source.picture,
+    source.photoURL,
+    source.photoUrl,
+    fromUser.profile_picture,
+    fromUser.profilePicture,
+    fromUser.profile_picture_url,
+    fromUser.profilePictureUrl,
+    fromUser.avatarUrl,
+    fromUser.avatar_url,
+    fromUser.picture,
+    fromUser.photoURL,
+    fromUser.photoUrl,
+    fromUserInfo.profile_picture,
+    fromUserInfo.profilePicture,
+    fromUserInfo.profile_picture_url,
+    fromUserInfo.profilePictureUrl,
+    fromUserInfo.avatarUrl,
+    fromUserInfo.avatar_url,
+    fromAuthor.profile_picture,
+    fromAuthor.profilePicture,
+    fromOwner.profile_picture,
+    fromOwner.profilePicture,
+  ]
+
+  for (const c of candidates) {
+    const url = pickProfilePictureCandidate(c)
+    if (url) return url
+  }
+
+  return fallback
 }
+
+// Backward-compatible aliases used across the app.
+export const resolveMainMediaUrl = getMainMediaUrl
+export const resolveThumbMediaUrl = getThumbUrl
+export const resolvePlayableVideoUrl = getHlsUrl
+export const resolveProfilePictureUrl = getProfilePictureUrl
 
 export function hasCloudFrontSignature(url: string): boolean {
   try {

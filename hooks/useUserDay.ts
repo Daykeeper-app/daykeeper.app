@@ -157,12 +157,51 @@ async function fetchPagedPosts(
   }
 }
 
+function stableId(value: unknown): string {
+  if (typeof value === "string" || typeof value === "number") {
+    const out = String(value).trim()
+    return out && out !== "[object Object]" ? out : ""
+  }
+  if (value && typeof value === "object") {
+    const obj = value as {
+      $oid?: unknown
+      id?: unknown
+      _id?: unknown
+      type?: unknown
+      data?: unknown
+      buffer?: unknown
+    }
+    if (typeof obj.$oid === "string" || typeof obj.$oid === "number") {
+      const out = String(obj.$oid).trim()
+      if (out) return out
+    }
+    if (obj.type === "Buffer" && Array.isArray(obj.data)) {
+      const bytes = obj.data.filter((n) => Number.isFinite(n)) as number[]
+      if (bytes.length) {
+        return bytes
+          .map((n) => Number(n).toString(16).padStart(2, "0"))
+          .join("")
+      }
+    }
+    if (typeof obj.id === "string" || typeof obj.id === "number") {
+      const out = String(obj.id).trim()
+      if (out) return out
+    }
+    if (typeof obj._id === "string" || typeof obj._id === "number") {
+      const out = String(obj._id).trim()
+      if (out) return out
+    }
+    return stableId(obj.id) || stableId(obj._id) || stableId(obj.buffer)
+  }
+  return ""
+}
+
 /**
  * IMPORTANT:
  * This prevents duplicates if the same page is fetched twice (IntersectionObserver / fast scroll / dev mode),
  * and it also protects you if the backend overlaps results between pages.
  */
-function flattenPagesUniqueById<T extends { _id?: any }>(
+function flattenPagesUniqueById<T extends { _id?: any; id?: any }>(
   pages: PagedData<T>[] | undefined
 ): T[] {
   if (!pages?.length) return []
@@ -171,7 +210,7 @@ function flattenPagesUniqueById<T extends { _id?: any }>(
 
   for (const p of pages) {
     for (const item of p.data ?? []) {
-      const id = item?._id ? String(item._id) : ""
+      const id = stableId(item?._id) || stableId(item?.id)
       if (!id) continue
       map.set(id, item)
     }

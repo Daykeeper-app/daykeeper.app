@@ -21,16 +21,44 @@ export type SearchResponse = {
   totalCount: number
 }
 
+function normalizeType(value: unknown): SearchType {
+  const raw = String(value ?? "").trim().toLowerCase()
+  if (raw === "user") return "User"
+  if (raw === "event") return "Event"
+  if (raw === "task") return "Task"
+  return "Post"
+}
+
+function normalizeOrder(value: unknown): SearchOrder {
+  const raw = String(value ?? "").trim().toLowerCase()
+  return raw === "relevant" ? "relevant" : "recent"
+}
+
 function stableId(value: unknown): string | null {
   if (typeof value === "string" || typeof value === "number") {
     const out = String(value).trim()
     return out || null
   }
   if (value && typeof value === "object") {
-    const obj = value as { $oid?: unknown; id?: unknown; _id?: unknown }
+    const obj = value as {
+      $oid?: unknown
+      id?: unknown
+      _id?: unknown
+      type?: unknown
+      data?: unknown
+      buffer?: unknown
+    }
     if (typeof obj.$oid === "string" || typeof obj.$oid === "number") {
       const out = String(obj.$oid).trim()
       if (out) return out
+    }
+    if (obj.type === "Buffer" && Array.isArray(obj.data)) {
+      const bytes = obj.data.filter((n) => Number.isFinite(n)) as number[]
+      if (bytes.length) {
+        return bytes
+          .map((n) => Number(n).toString(16).padStart(2, "0"))
+          .join("")
+      }
     }
     if (typeof obj.id === "string" || typeof obj.id === "number") {
       const out = String(obj.id).trim()
@@ -40,6 +68,8 @@ function stableId(value: unknown): string | null {
       const out = String(obj._id).trim()
       if (out) return out
     }
+    const nested = stableId(obj.id) || stableId(obj._id) || stableId(obj.buffer)
+    if (nested) return nested
   }
   return null
 }
@@ -75,10 +105,13 @@ async function fetchSearchPage(args: {
   maxPageSize: number
   following?: FollowingScope // omit for default
 }): Promise<SearchResponse> {
+  const type = normalizeType(args.type)
+  const order = normalizeOrder(args.order)
+
   const qs = buildQuery({
     q: args.q,
-    type: args.type,
-    order: args.order,
+    type,
+    order,
     page: args.page,
     maxPageSize: args.maxPageSize,
     ...(args.following ? { following: args.following } : {}),
@@ -98,9 +131,20 @@ async function fetchSearchPage(args: {
 
   const json = await readJsonSafe<any>(res)
 
-  const list = Array.isArray(json?.data) ? json.data : []
-  const totalPages = Number(json?.totalPages ?? 1) || 1
-  const totalCount = Number(json?.totalCount ?? list.length) || list.length
+  const payload =
+    json?.response ??
+    json?.data?.response ??
+    json ??
+    {}
+
+  const list = Array.isArray(payload?.data)
+    ? payload.data
+    : Array.isArray(json?.data)
+      ? json.data
+      : []
+  const totalPages = Number(payload?.totalPages ?? json?.totalPages ?? 1) || 1
+  const totalCount =
+    Number(payload?.totalCount ?? json?.totalCount ?? list.length) || list.length
 
   return {
     data: list,

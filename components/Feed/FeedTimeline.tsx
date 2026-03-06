@@ -60,7 +60,7 @@ export default function FeedTimeline({
 
   return (
     <div
-      className="relative px-1 sm:px-2"
+      className="relative px-0 sm:px-2"
       style={{
         ["--lane-x" as any]: LANE_X,
         ["--lane-right" as any]: LANE_RIGHT,
@@ -78,12 +78,12 @@ export default function FeedTimeline({
                 onRefreshMedia={onRefreshMedia}
               />
               {idx < data.length - 1 ? (
-                <div className="mx-4 sm:mx-6 mt-4 h-px bg-(--dk-ink)/10" />
+                <div className="mx-3 sm:mx-6 mt-4 h-px bg-(--dk-ink)/10" />
               ) : null}
             </div>
           ))}
 
-          <div className="pl-11 pt-2">
+          <div className="pl-0 sm:pl-11 pt-2">
             {error && onRetry ? (
               <button
                 onClick={onRetry}

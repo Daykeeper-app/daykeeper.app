@@ -12,8 +12,25 @@ import SearchDayKindRow from "@/components/Search/SearchDayKindRow"
 function stableKey(id: unknown, index: number) {
   if (typeof id === "string" || typeof id === "number") return String(id)
   if (id && typeof id === "object") {
-    const oid = (id as { $oid?: unknown }).$oid
+    const obj = id as {
+      $oid?: unknown
+      type?: unknown
+      data?: unknown
+      id?: unknown
+      _id?: unknown
+    }
+    const oid = obj.$oid
     if (typeof oid === "string" || typeof oid === "number") return String(oid)
+    if (obj.type === "Buffer" && Array.isArray(obj.data)) {
+      const bytes = obj.data.filter((n) => Number.isFinite(n)) as number[]
+      if (bytes.length) {
+        return bytes
+          .map((n) => Number(n).toString(16).padStart(2, "0"))
+          .join("")
+      }
+    }
+    if (typeof obj.id === "string" || typeof obj.id === "number") return String(obj.id)
+    if (typeof obj._id === "string" || typeof obj._id === "number") return String(obj._id)
   }
   return `day-kind-${index}`
 }

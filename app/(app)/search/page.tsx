@@ -27,12 +27,25 @@ function cleanStr(v: string | null) {
   return (v || "").trim()
 }
 
+function normalizeTypeParam(v: string | null): SearchType {
+  const raw = cleanStr(v).toLowerCase()
+  if (raw === "user") return "User"
+  if (raw === "event") return "Event"
+  if (raw === "task") return "Task"
+  return "Post"
+}
+
+function normalizeOrderParam(v: string | null): SearchOrder {
+  const raw = cleanStr(v).toLowerCase()
+  return raw === "relevant" ? "relevant" : "recent"
+}
+
 function SearchPageInner() {
   const router = useRouter()
   const sp = useSearchParams()
 
-  const type = ((sp.get("type") as SearchType) || "Post") as SearchType
-  const order = ((sp.get("order") as SearchOrder) || "recent") as SearchOrder
+  const type = normalizeTypeParam(sp.get("type"))
+  const order = normalizeOrderParam(sp.get("order"))
   const q = cleanStr(sp.get("q"))
 
   const followingParam = cleanStr(sp.get("following"))

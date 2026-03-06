@@ -20,6 +20,7 @@ import { API_URL } from "@/config"
 import { useQueryClient } from "@tanstack/react-query"
 import { useMe } from "@/lib/useMe"
 import RichText from "@/components/common/RichText"
+import { stableFeedId } from "@/lib/feedTypes"
 
 type ApiOk<T> = { message?: string; data?: T }
 
@@ -276,8 +277,8 @@ export default function UserDayTasks({
       ) : null}
 
       <div className="space-y-0.5">
-        {visible.map((t: any) => {
-          const id = String(t?._id || "")
+        {visible.map((t: any, idx: number) => {
+          const id = stableFeedId(t?._id) || stableFeedId(t?.id) || ""
           const done = !!t.completed
 
           const isOwner =
@@ -287,7 +288,7 @@ export default function UserDayTasks({
           const rowBusy = id ? !!busyMap[id] : false
 
           return (
-            <div key={id || t._id} className="space-y-1">
+            <div key={id || `task-${idx}`} className="space-y-1">
               {rowErr ? (
                 <div className="text-xs text-red-600 px-1">{rowErr}</div>
               ) : null}
@@ -295,7 +296,10 @@ export default function UserDayTasks({
               <UserDayListRow
                 showLane
                 leftIcon={<ClipboardList size={22} />}
-                onClick={() => router.push(`/day/tasks/${t._id}`)}
+                onClick={() => {
+                  if (!id) return
+                  router.push(`/day/tasks/${encodeURIComponent(id)}`)
+                }}
                 metaTop={
                   <span className="inline-flex items-center gap-2">
                     <span className="inline-flex items-center gap-1.5">

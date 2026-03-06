@@ -15,20 +15,25 @@ import ActionPill from "../common/ActionPill"
 import type { PaginationMeta } from "@/hooks/useUserDay"
 import { useRouter } from "next/navigation"
 import RichText from "@/components/common/RichText"
+import { stableFeedId } from "@/lib/feedTypes"
 
 function pad2(n: number) {
   return String(n).padStart(2, "0")
 }
 
 function weekKey(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const x = new Date(d)
   x.setHours(0, 0, 0, 0)
+  if (Number.isNaN(x.getTime())) return ""
   const day = x.getDay()
   x.setDate(x.getDate() - day)
+  if (Number.isNaN(x.getTime())) return ""
   return x.toISOString().slice(0, 10)
 }
 
 function formatShortWeekdayTime(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const weekday = d.toLocaleDateString([], { weekday: "short" })
   const hh = pad2(d.getHours())
   const mm = pad2(d.getMinutes())
@@ -36,6 +41,7 @@ function formatShortWeekdayTime(d: Date) {
 }
 
 function formatFullDDMMYYYYTime(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const dd = pad2(d.getDate())
   const mm = pad2(d.getMonth() + 1)
   const yyyy = d.getFullYear()
@@ -48,12 +54,13 @@ function formatEventTimeRange(startISO?: string, endISO?: string) {
   const start = startISO ? new Date(startISO) : null
   const end = endISO ? new Date(endISO) : null
 
-  if (!start) return { startText: "", endText: "" }
+  if (!start || Number.isNaN(start.getTime())) return { startText: "", endText: "" }
+  const safeEnd = end && !Number.isNaN(end.getTime()) ? end : null
 
-  const crossesWeek = !!end && weekKey(start) !== weekKey(end)
+  const crossesWeek = !!safeEnd && weekKey(start) !== weekKey(safeEnd)
   const fmt = crossesWeek ? formatFullDDMMYYYYTime : formatShortWeekdayTime
 
-  return { startText: fmt(start), endText: end ? fmt(end) : "" }
+  return { startText: fmt(start), endText: safeEnd ? fmt(safeEnd) : "" }
 }
 
 function formatCreatedTime(iso?: string) {
@@ -117,7 +124,8 @@ export default function UserDayEvents({
       ) : null}
 
       <div className="space-y-0.5">
-        {visible.map((ev: any) => {
+        {visible.map((ev: any, idx: number) => {
+          const eventId = stableFeedId(ev?._id) || stableFeedId(ev?.id)
           const { startText, endText } = formatEventTimeRange(
             ev.dateStartLocal || ev.dateStart,
             ev.dateEndLocal || ev.dateEnd,
@@ -128,10 +136,13 @@ export default function UserDayEvents({
 
           return (
             <UserDayListRow
-              key={ev._id}
+              key={eventId || `event-${idx}`}
               leftIcon={<CalendarDays size={18} />}
               title={<RichText text={String(ev.title || "")} />}
-              onClick={() => router.push(`/day/events/${ev._id}`)}
+              onClick={() => {
+                if (!eventId) return
+                router.push(`/day/events/${encodeURIComponent(eventId)}`)
+              }}
               metaTop={
                 <div className="flex items-center gap-2 flex-wrap min-w-0">
                   <span className="inline-flex items-center gap-1.5 text-xs text-(--dk-slate) shrink-0">

@@ -11,6 +11,7 @@ import { CalendarDays, ClipboardList } from "lucide-react"
 import ContentHeader from "@/components/common/ContentHeader"
 import UserDayListRow from "@/components/UserDay/UserDayListRow"
 import PrivacyChip from "@/components/common/PrivacyChip"
+import { stableSearchId } from "@/components/Search/searchUtils"
 
 function formatPostedAt(s?: string) {
   if (!s) return ""
@@ -22,19 +23,24 @@ function pad2(n: number) {
   return String(n).padStart(2, "0")
 }
 function weekKey(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const x = new Date(d)
   x.setHours(0, 0, 0, 0)
+  if (Number.isNaN(x.getTime())) return ""
   const day = x.getDay()
   x.setDate(x.getDate() - day)
+  if (Number.isNaN(x.getTime())) return ""
   return x.toISOString().slice(0, 10)
 }
 function formatShortWeekdayTime(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const weekday = d.toLocaleDateString([], { weekday: "short" })
   const hh = pad2(d.getHours())
   const mm = pad2(d.getMinutes())
   return `${weekday} ${hh}:${mm}`
 }
 function formatFullDDMMYYYYTime(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const dd = pad2(d.getDate())
   const mm = pad2(d.getMonth() + 1)
   const yyyy = d.getFullYear()
@@ -45,12 +51,13 @@ function formatFullDDMMYYYYTime(d: Date) {
 function formatEventTimeRange(startISO?: string, endISO?: string) {
   const start = startISO ? new Date(startISO) : null
   const end = endISO ? new Date(endISO) : null
-  if (!start) return { startText: "", endText: "" }
+  if (!start || Number.isNaN(start.getTime())) return { startText: "", endText: "" }
+  const safeEnd = end && !Number.isNaN(end.getTime()) ? end : null
 
-  const crossesWeek = !!end && weekKey(start) !== weekKey(end)
+  const crossesWeek = !!safeEnd && weekKey(start) !== weekKey(safeEnd)
   const fmt = crossesWeek ? formatFullDDMMYYYYTime : formatShortWeekdayTime
 
-  return { startText: fmt(start), endText: end ? fmt(end) : "" }
+  return { startText: fmt(start), endText: safeEnd ? fmt(safeEnd) : "" }
 }
 
 function formatTime(iso?: string) {
@@ -89,8 +96,9 @@ function subtitleFor(item: any, type: "Event" | "Task") {
 }
 
 function hrefFor(item: any, type: "Event" | "Task") {
-  if (!item?._id) return null
-  const id = encodeURIComponent(String(item._id))
+  const rawId = stableSearchId(item?._id) || stableSearchId(item?.id)
+  if (!rawId) return null
+  const id = encodeURIComponent(rawId)
   if (type === "Event") return `/day/events/${id}`
   return `/day/tasks/${id}`
 }

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { CalendarDays, ClipboardList, CheckSquare2, Square } from "lucide-react"
 
 import type { FeedUserDayItem } from "@/lib/feedTypes"
+import { stableFeedId } from "@/lib/feedTypes"
 import UserDayListRow from "@/components/UserDay/UserDayListRow"
 import PrivacyChip from "@/components/common/PrivacyChip"
 
@@ -19,14 +20,18 @@ function pad2(n: number) {
 }
 
 function weekKey(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const x = new Date(d)
   x.setHours(0, 0, 0, 0)
+  if (Number.isNaN(x.getTime())) return ""
   const day = x.getDay()
   x.setDate(x.getDate() - day)
+  if (Number.isNaN(x.getTime())) return ""
   return x.toISOString().slice(0, 10)
 }
 
 function formatShortWeekdayTime(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const weekday = d.toLocaleDateString([], { weekday: "short" })
   const hh = pad2(d.getHours())
   const mm = pad2(d.getMinutes())
@@ -34,6 +39,7 @@ function formatShortWeekdayTime(d: Date) {
 }
 
 function formatFullDDMMYYYYTime(d: Date) {
+  if (Number.isNaN(d.getTime())) return ""
   const dd = pad2(d.getDate())
   const mm = pad2(d.getMonth() + 1)
   const yyyy = d.getFullYear()
@@ -45,12 +51,13 @@ function formatFullDDMMYYYYTime(d: Date) {
 function formatEventTimeRange(startISO?: string, endISO?: string) {
   const start = startISO ? new Date(startISO) : null
   const end = endISO ? new Date(endISO) : null
-  if (!start) return { startText: "", endText: "" }
+  if (!start || Number.isNaN(start.getTime())) return { startText: "", endText: "" }
+  const safeEnd = end && !Number.isNaN(end.getTime()) ? end : null
 
-  const crossesWeek = !!end && weekKey(start) !== weekKey(end)
+  const crossesWeek = !!safeEnd && weekKey(start) !== weekKey(safeEnd)
   const fmt = crossesWeek ? formatFullDDMMYYYYTime : formatShortWeekdayTime
 
-  return { startText: fmt(start), endText: end ? fmt(end) : "" }
+  return { startText: fmt(start), endText: safeEnd ? fmt(safeEnd) : "" }
 }
 
 function iconFor(type: FeedUserDayItem["type"]) {
@@ -68,8 +75,9 @@ export default function FeedUserDayItemRow({
   const router = useRouter()
 
   const href = useMemo(() => {
-    const id = encodeURIComponent(String(item.id || ""))
-    if (!id) return null
+    const rawId = stableFeedId(item.id)
+    if (!rawId) return null
+    const id = encodeURIComponent(rawId)
     if (item.type === "event") return `/day/events/${id}`
     if (item.type === "task") return `/day/tasks/${id}`
     return null
@@ -173,14 +181,14 @@ export default function FeedUserDayItemRow({
     <div className="relative">
       {/* dot */}
       <div
-        className="absolute top-5 h-2.5 w-2.5 rounded-full bg-(--dk-sky)"
+        className="absolute top-5 hidden h-2.5 w-2.5 rounded-full bg-(--dk-sky) sm:block"
         style={{ left: 0, transform: "translateX(-50%)" }}
       />
 
       {/* connector */}
       {!isLast ? (
         <div
-          className="absolute top-6 w-px bg-(--dk-sky)/40"
+          className="absolute top-6 hidden w-px bg-(--dk-sky)/40 sm:block"
           style={{
             left: 0,
             transform: "translateX(-50%)",
@@ -190,7 +198,7 @@ export default function FeedUserDayItemRow({
       ) : null}
 
       <div
-        className="ml-7 rounded-lg px-3 py-2 transition hover:bg-(--dk-mist)/35"
+        className="ml-0 sm:ml-7 rounded-lg px-2.5 sm:px-3 py-2 transition hover:bg-(--dk-mist)/35"
         onClick={() => {
           if (href) router.push(href)
         }}
