@@ -3,10 +3,7 @@
 import { Search, Bell, Plus, CalendarDays, CheckSquare2, EyeOff, ChevronRight } from "lucide-react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import {
-  isMediaReviewNotification,
-  useNotifications,
-} from "@/hooks/useNotifications"
+import { useNotifications } from "@/hooks/useNotifications"
 
 const QUICK_ACTIONS = [
   { label: "Post", icon: Plus, href: "/post/create" },
@@ -45,12 +42,7 @@ export default function RightPanel() {
   const router = useRouter()
   const [query, setQuery] = useState("")
   const debounceRef = useRef<any>(null)
-  const { items, loading } = useNotifications()
-
-  const visibleNotifications = useMemo(
-    () => items.filter((n) => !isMediaReviewNotification(n)),
-    [items]
-  )
+  const { items: visibleNotifications, loading } = useNotifications("without-media-review")
   const visibleUnreadCount = useMemo(
     () => visibleNotifications.reduce((acc, n) => acc + (n.read ? 0 : 1), 0),
     [visibleNotifications]

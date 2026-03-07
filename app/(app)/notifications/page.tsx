@@ -34,7 +34,7 @@ export default function NotificationsPage() {
     markRead,
     totalCount,
     unreadCount,
-  } = useNotifications()
+  } = useNotifications("without-media-review")
 
   useEffect(() => {
     let alive = true
@@ -56,15 +56,10 @@ export default function NotificationsPage() {
   }, [])
 
   const displayUnreadCount = unreadCount
-  const mediaReviewItems = useMemo(
-    () => items.filter((it) => isMediaReviewNotification(it)),
-    [items]
-  )
   const regularItems = useMemo(
     () => items.filter((it) => !isMediaReviewNotification(it)),
     [items]
   )
-
   const unreadIds = useMemo(
     () =>
       regularItems
@@ -124,9 +119,6 @@ export default function NotificationsPage() {
             >
               <Film size={14} />
               Media reviews
-              <span className="rounded-md bg-(--dk-paper)/85 px-1.5 py-0.5 text-[11px] text-(--dk-slate)">
-                {mediaReviewItems.length}
-              </span>
             </button>
           </div>
         </div>

@@ -30,7 +30,7 @@ export default function MediaReviewsNotificationsPage() {
     loadMore,
     reload,
     markRead,
-  } = useNotifications()
+  } = useNotifications("media-review")
 
   const mediaItems = useMemo(
     () => items.filter((it) => isMediaReviewNotification(it)),

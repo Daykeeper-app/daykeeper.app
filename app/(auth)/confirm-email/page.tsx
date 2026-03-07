@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { Suspense, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { completeAuthLogin } from "@/lib/completeAuth"
 
 import FormShell from "@/components/Form/FormShell"
 import FormLogo from "@/components/Form/FormLogo"
@@ -65,7 +66,14 @@ function ConfirmEmailForm() {
         return
       }
 
-      router.push("/login?message=email-confirmed")
+      const token = data?.accessToken as string | undefined
+      if (!token) {
+        setError("Confirmation succeeded but no access token was returned.")
+        return
+      }
+
+      await completeAuthLogin(token)
+      router.push("/")
     } catch {
       setError("Network error. Try again.")
     } finally {

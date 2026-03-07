@@ -4,8 +4,7 @@ import { Suspense, useMemo, useState } from "react"
 import Link from "next/link"
 import { Chrome } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { authClient } from "@/lib/authClient"
-import { queryClient } from "@/lib/queryClient"
+import { completeAuthLogin } from "@/lib/completeAuth"
 
 import FormShell from "@/components/Form/FormShell"
 import FormLogo from "@/components/Form/FormLogo"
@@ -67,9 +66,7 @@ function LoginForm() {
         return
       }
 
-      await queryClient.cancelQueries()
-      queryClient.clear()
-      authClient.setAccessToken(token)
+      await completeAuthLogin(token)
       router.push("/")
     } catch {
       setError("Network error. Try again.")

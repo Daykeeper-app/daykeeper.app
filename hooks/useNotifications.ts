@@ -14,6 +14,7 @@ export type NotificationItem = {
   route?: string
   data?: Record<string, unknown>
   read?: boolean
+  seen?: boolean
   created_at?: string
 }
 
@@ -41,6 +42,8 @@ type NotificationsQueryData = {
 
 const PAGE_SIZE = 20
 
+export type NotificationsScope = "all" | "without-media-review" | "media-review"
+
 function toStableId(id: unknown): string {
   if (typeof id === "string" || typeof id === "number") return String(id)
   if (id && typeof id === "object") {
@@ -51,14 +54,22 @@ function toStableId(id: unknown): string {
 }
 
 async function fetchNotificationsPage(
-  page: number
+  page: number,
+  scope: NotificationsScope
 ): Promise<NotificationsResponse> {
   const qs = new URLSearchParams({
     page: String(page),
     maxPageSize: String(PAGE_SIZE),
   })
 
-  const res = await apiFetch(`${API_URL}/notifications?${qs.toString()}`, {
+  const basePath =
+    scope === "media-review"
+      ? "notifications/media-review"
+      : scope === "without-media-review"
+        ? "notifications/without-media-review"
+        : "notifications"
+
+  const res = await apiFetch(`${API_URL}/${basePath}?${qs.toString()}`, {
     method: "GET",
     cache: "no-store",
   })
@@ -80,12 +91,12 @@ async function patchRead(ids: string[]) {
   })
 }
 
-export function useNotifications() {
+export function useNotifications(scope: NotificationsScope = "without-media-review") {
   const queryClient = useQueryClient()
   const q = useInfiniteQuery({
-    queryKey: ["notifications"],
+    queryKey: ["notifications", scope],
     initialPageParam: 1,
-    queryFn: ({ pageParam }) => fetchNotificationsPage(Number(pageParam)),
+    queryFn: ({ pageParam }) => fetchNotificationsPage(Number(pageParam), scope),
     getNextPageParam: (lastPage) => {
       const page = lastPage?.page ?? 1
       const totalPages = lastPage?.totalPages
@@ -109,20 +120,25 @@ export function useNotifications() {
     const set = new Set(ids.map(String).filter(Boolean))
 
     // Optimistic local update so "unread" changes immediately in UI.
-    queryClient.setQueryData(["notifications"], (prev: NotificationsQueryData | undefined) => {
-      if (!prev?.pages) return prev
-      return {
-        ...prev,
-        pages: prev.pages.map((page) => ({
-          ...page,
-          data: Array.isArray(page?.data)
-            ? page.data.map((it: NotificationItem) =>
-                set.has(toStableId(it?._id)) ? { ...it, read: true } : it
-              )
-            : page?.data,
-        })),
+    queryClient.setQueriesData(
+      { queryKey: ["notifications"] },
+      (prev: NotificationsQueryData | undefined) => {
+        if (!prev?.pages) return prev
+        return {
+          ...prev,
+          pages: prev.pages.map((page) => ({
+            ...page,
+            data: Array.isArray(page?.data)
+              ? page.data.map((it: NotificationItem) =>
+                  set.has(toStableId(it?._id))
+                    ? { ...it, read: true, seen: true }
+                    : it
+                )
+              : page?.data,
+          })),
+        }
       }
-    })
+    )
 
     try {
       await patchRead(ids)
@@ -147,7 +163,8 @@ export function useNotifications() {
     (acc, item) => {
       const id = toStableId(item?._id)
       if (!id) return acc
-      return acc + (item.read ? 0 : 1)
+      const isRead = item.read ?? item.seen ?? false
+      return acc + (isRead ? 0 : 1)
     },
     0
   )
