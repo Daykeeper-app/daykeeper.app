@@ -22,8 +22,9 @@ function LoginForm() {
   const router = useRouter()
   const params = useSearchParams()
   const message = params.get("message")
+  const initialEmail = (params.get("email") || "").trim().toLowerCase()
 
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
