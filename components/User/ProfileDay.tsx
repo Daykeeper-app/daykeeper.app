@@ -226,6 +226,7 @@ export default function ProfileDaySections({ username, className }: Props) {
               <UserDaySection
                 title="Posts"
                 count={postsMeta?.totalCount ?? posts.length}
+                action={isSelf ? addButton("/post/create") : undefined}
               >
                 <UserDayPosts
                   posts={posts}

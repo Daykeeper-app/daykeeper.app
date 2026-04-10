@@ -3,14 +3,14 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Search, Bell, User, Settings } from "lucide-react"
+import { Users, Search, Bell, User, Settings } from "lucide-react"
 
 import { useMe } from "@/lib/useMe"
 import { useNotifications } from "@/hooks/useNotifications"
 import CreateMenuButton from "@/components/Navbar/CreateMenuButton"
 
 const NAV: any = [
-  { label: "Feed", href: "/", icon: Home },
+  { label: "Feed", href: "/feed", icon: Users },
   { label: "Search", href: "/search", icon: Search },
   { label: "Notifications", href: "/notifications", icon: Bell },
   { label: "Settings", href: "/settings", icon: Settings },
@@ -41,6 +41,31 @@ export default function SidebarNav() {
 
         {/* Nav */}
         <nav className="px-3 py-4 space-y-1">
+          {me &&
+            (() => {
+              const profileHref = `/${me.username}`
+              const isActive =
+                pathname === profileHref ||
+                pathname.startsWith(profileHref + "/")
+
+              return (
+                <Link
+                  href={profileHref}
+                  className={[
+                    "flex items-center gap-4 px-4 py-3 rounded-xl transition",
+                    isActive
+                      ? "text-(--dk-sky) bg-(--dk-mist)"
+                      : "text-(--dk-slate) hover:text-(--dk-ink) hover:bg-[color-mix(in_srgb,var(--dk-mist)_70%,transparent)]",
+                  ].join(" ")}
+                >
+                  <User size={22} strokeWidth={isActive ? 2.6 : 2} />
+                  <span className={isActive ? "font-bold" : "font-medium"}>
+                    Profile
+                  </span>
+                </Link>
+              )
+            })()}
+
           {NAV.map((item: any) => {
             const active =
               pathname === item.href || pathname.startsWith(item.href + "/")
@@ -71,31 +96,6 @@ export default function SidebarNav() {
               </Link>
             )
           })}
-
-          {me &&
-            (() => {
-              const profileHref = `/${me.username}`
-              const isActive =
-                pathname === profileHref ||
-                pathname.startsWith(profileHref + "/")
-
-              return (
-                <Link
-                  href={profileHref}
-                  className={[
-                    "flex items-center gap-4 px-4 py-3 rounded-xl transition",
-                    isActive
-                      ? "text-(--dk-sky) bg-(--dk-mist)"
-                      : "text-(--dk-slate) hover:text-(--dk-ink) hover:bg-[color-mix(in_srgb,var(--dk-mist)_70%,transparent)]",
-                  ].join(" ")}
-                >
-                  <User size={22} strokeWidth={isActive ? 2.6 : 2} />
-                  <span className={isActive ? "font-bold" : "font-medium"}>
-                    Profile
-                  </span>
-                </Link>
-              )
-            })()}
         </nav>
 
         {/* Create button */}

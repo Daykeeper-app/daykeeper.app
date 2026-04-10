@@ -60,35 +60,25 @@ function ActivityCalendarSkeleton() {
           <div className="h-8 w-24 rounded-lg bg-(--dk-mist)" />
         </div>
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[760px]">
-            <div className="mb-1 ml-8 grid auto-cols-[12px] grid-flow-col gap-[4px]">
+        <div className="overflow-hidden">
+          <div>
+            <div className="mb-1 grid auto-cols-[10px] grid-flow-col gap-[3px]">
               {Array.from({ length: 24 }).map((_, i) => (
                 <div key={`sm-${i}`} className="h-2 w-5 rounded bg-(--dk-mist)" />
               ))}
             </div>
 
-            <div className="flex items-start gap-2">
-              <div className="w-6">
-                <div className="grid grid-rows-7 gap-[4px]">
-                  {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={`sd-${i}`} className="h-[12px] rounded bg-transparent" />
+            <div className="grid auto-cols-[10px] grid-flow-col gap-[3px]">
+              {Array.from({ length: 54 }).map((_, wi) => (
+                <div key={`sw-${wi}`} className="grid grid-rows-7 gap-[3px]">
+                  {Array.from({ length: 7 }).map((__, di) => (
+                    <div
+                      key={`sc-${wi}-${di}`}
+                      className="h-[10px] w-[10px] rounded-[3px] bg-(--dk-mist)"
+                    />
                   ))}
                 </div>
-              </div>
-
-              <div className="grid auto-cols-[12px] grid-flow-col gap-[4px]">
-                {Array.from({ length: 54 }).map((_, wi) => (
-                  <div key={`sw-${wi}`} className="grid grid-rows-7 gap-[4px]">
-                    {Array.from({ length: 7 }).map((__, di) => (
-                      <div
-                        key={`sc-${wi}-${di}`}
-                        className="h-[12px] w-[12px] rounded-[3px] bg-(--dk-mist)"
-                      />
-                    ))}
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -256,52 +246,38 @@ export default function ProfileActivityCalendar({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[760px]">
-            <div className="mb-1 ml-8 grid auto-cols-[12px] grid-flow-col gap-[4px] text-[10px] text-(--dk-slate)">
+        <div className="overflow-hidden">
+          <div>
+            <div className="mb-1 grid auto-cols-[10px] grid-flow-col gap-[3px] text-[10px] text-(--dk-slate)">
               {Array.from({ length: weeks.length }).map((_, idx) => {
                 const label = monthLabelByIndex.get(idx)
                 return <div key={`m-${idx}`}>{label || ""}</div>
               })}
             </div>
 
-            <div className="flex items-start gap-2">
-              <div className="w-6 text-[10px] text-(--dk-slate)">
-                <div className="grid grid-rows-7 gap-[4px]">
-                  <div className="h-[12px]" />
-                  <div className="h-[12px] leading-[12px]">Mon</div>
-                  <div className="h-[12px]" />
-                  <div className="h-[12px] leading-[12px]">Wed</div>
-                  <div className="h-[12px]" />
-                  <div className="h-[12px] leading-[12px]">Fri</div>
-                  <div className="h-[12px]" />
+            <div className="grid auto-cols-[10px] grid-flow-col gap-[3px]">
+              {weeks.map((week, wi) => (
+                <div key={`w-${wi}`} className="grid grid-rows-7 gap-[3px]">
+                  {week.map((c, di) =>
+                    c ? (
+                      <button
+                        key={`c-${wi}-${di}`}
+                        type="button"
+                        title={tooltipText(c)}
+                        onClick={() => onSelectDay(c.date)}
+                        className={`h-[10px] w-[10px] rounded-[3px] transition hover:opacity-85 ${levelClass(c.level)}`}
+                        aria-label={`Open ${c.date}`}
+                      />
+                    ) : (
+                      <div
+                        key={`c-${wi}-${di}`}
+                        className="h-[10px] w-[10px] rounded-[3px] bg-transparent"
+                        aria-hidden
+                      />
+                    )
+                  )}
                 </div>
-              </div>
-
-              <div className="grid auto-cols-[12px] grid-flow-col gap-[4px]">
-                {weeks.map((week, wi) => (
-                  <div key={`w-${wi}`} className="grid grid-rows-7 gap-[4px]">
-                    {week.map((c, di) => (
-                      c ? (
-                        <button
-                          key={`c-${wi}-${di}`}
-                          type="button"
-                          title={tooltipText(c)}
-                          onClick={() => onSelectDay(c.date)}
-                          className={`h-[12px] w-[12px] rounded-[3px] transition hover:opacity-85 ${levelClass(c.level)}`}
-                          aria-label={`Open ${c.date}`}
-                        />
-                      ) : (
-                        <div
-                          key={`c-${wi}-${di}`}
-                          className="h-[12px] w-[12px] rounded-[3px] bg-transparent"
-                          aria-hidden
-                        />
-                      )
-                    ))}
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
         </div>

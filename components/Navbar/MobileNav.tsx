@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Search, Bell, User } from "lucide-react"
+import { Users, Search, Bell, User } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 
 import { useMe } from "@/lib/useMe"
@@ -27,11 +27,11 @@ export default function MobileNav() {
   const { unreadCount } = useNotifications()
 
   const NAV: NavItem[] = [
-    { href: "/", icon: Home },
+    ...(me ? [{ href: `/${me.username}`, icon: User, isProfile: true }] : []),
+    { href: "/feed", icon: Users },
     { href: "/search", icon: Search },
     { href: "/post/create", icon: null, isCreate: true },
     { href: "/notifications", icon: Bell },
-    ...(me ? [{ href: `/${me.username}`, icon: User, isProfile: true }] : []),
   ]
 
   return (

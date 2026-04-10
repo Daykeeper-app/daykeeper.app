@@ -50,6 +50,42 @@ function combineDateTime(date: string, time: string) {
   return d.toISOString()
 }
 
+function addMinutes(date: string, time: string, minutes: number) {
+  const base = new Date(`${date}T${time || "00:00"}:00`)
+  if (!Number.isFinite(base.getTime())) return null
+  base.setMinutes(base.getMinutes() + minutes)
+
+  const yyyy = base.getFullYear()
+  const mm = String(base.getMonth() + 1).padStart(2, "0")
+  const dd = String(base.getDate()).padStart(2, "0")
+  const hh = String(base.getHours()).padStart(2, "0")
+  const min = String(base.getMinutes()).padStart(2, "0")
+
+  return {
+    date: `${yyyy}-${mm}-${dd}`,
+    time: `${hh}:${min}`,
+  }
+}
+
+function formatEventSummaryDate(date: Date) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+
+  const target = new Date(date)
+  target.setHours(0, 0, 0, 0)
+
+  if (target.getTime() === today.getTime()) return "today"
+  if (target.getTime() === tomorrow.getTime()) return "tomorrow"
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  })
+}
+
 function todayInputs(fromDate?: string | null) {
   if (fromDate && /^\d{4}-\d{2}-\d{2}$/.test(fromDate)) {
     return { date: fromDate, time: "00:00" }
@@ -85,11 +121,56 @@ function CreateEventForm() {
 
   useEffect(() => {
     const next = todayInputs(sp.get("date"))
+    const defaultEnd = addMinutes(next.date, next.time, 30)
     setStartDate(next.date)
     setStartTime(next.time)
-    setEndDate(next.date)
-    setEndTime(next.time)
+    setEndDate(defaultEnd?.date ?? next.date)
+    setEndTime(defaultEnd?.time ?? next.time)
   }, [sp])
+
+  const rangeSummary = useMemo(() => {
+    if (!startDate || !endDate) return null
+
+    const start = new Date(`${startDate}T${startTime || "00:00"}:00`)
+    const end = new Date(`${endDate}T${endTime || "00:00"}:00`)
+
+    if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+      return null
+    }
+
+    const diffMs = end.getTime() - start.getTime()
+    if (diffMs < 0) return null
+
+    const totalMinutes = Math.round(diffMs / 60000)
+    const hours = Math.floor(totalMinutes / 60)
+    const minutes = totalMinutes % 60
+    const durationParts = []
+
+    if (hours > 0) durationParts.push(`${hours}h`)
+    if (minutes > 0 || durationParts.length === 0) {
+      durationParts.push(`${minutes}min`)
+    }
+
+    const sameDay = startDate === endDate
+    const startText = start.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+    const endText = end.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+    })
+    const endDateText = end.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })
+    const startDateLabel = formatEventSummaryDate(start)
+    const endDateLabel = formatEventSummaryDate(end)
+
+    return sameDay
+      ? `${startText} to ${endText} • ${durationParts.join(" ")}`
+      : `${startText} on ${startDateLabel} to ${endText} on ${endDateLabel} • ${durationParts.join(" ")}`
+  }, [startDate, startTime, endDate, endTime])
 
   const rangeValid = useMemo(() => {
     if (!startDate || !endDate) return false
@@ -245,6 +326,17 @@ function CreateEventForm() {
               />
             </div>
           </div>
+
+          {rangeSummary ? (
+            <div className="rounded-xl bg-(--dk-sky)/10 px-3 py-3">
+              <div className="text-xs font-medium text-(--dk-slate)">
+                Event time
+              </div>
+              <div className="mt-1 text-sm font-semibold text-(--dk-ink)">
+                {rangeSummary}
+              </div>
+            </div>
+          ) : null}
 
           {!rangeValid ? (
             <div className="text-xs text-red-500">

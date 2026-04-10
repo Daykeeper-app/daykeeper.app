@@ -108,7 +108,10 @@ export default function UserDayPosts({
             Scroll to load more{remaining ? ` (${remaining} left)` : ""}
           </div>
         ) : (
-          <FeedTimelineEnd />
+          <FeedTimelineEnd
+            title="This is everything"
+            message="These are all the interactions you had on this day."
+          />
         )}
       </div>
     </div>
