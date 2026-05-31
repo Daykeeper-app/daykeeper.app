@@ -2,9 +2,13 @@
 
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
+  ArrowLeft,
   ArrowRight,
   Ban,
+  BookOpen,
+  HelpCircle,
   Lock,
   LogOut,
   Monitor,
@@ -16,6 +20,7 @@ import {
 } from "lucide-react"
 
 import LogoutButton from "./LogoutButton"
+import TutorialOverlay from "@/components/common/TutorialOverlay"
 import { getTheme, setTheme, type ThemeMode } from "@/lib/theme"
 
 function SectionBlock({
@@ -73,20 +78,28 @@ function SettingsRow({
 }
 
 export default function SettingsPage() {
+  const router = useRouter()
   const [mode, setMode] = useState<ThemeMode>("system")
+  const [showTutorial, setShowTutorial] = useState(false)
   useEffect(() => setMode(getTheme()), [])
 
   return (
     <main className="pb-20 lg:pb-0">
-      <div className="max-w-3xl mx-auto border-x border-(--dk-ink)/10 bg-(--dk-paper) min-h-screen">
+      <div className="max-w-3xl mx-auto lg:border-x lg:border-(--dk-ink)/10 bg-(--dk-paper) min-h-screen">
         <div className="sticky top-0 bg-(--dk-paper)/95 backdrop-blur-md z-20">
-          <div className="h-1 w-full bg-(--dk-sky)/70" />
-          <div className="px-4 py-3">
-            <div className="text-sm font-semibold text-(--dk-ink)">
-              Settings
-            </div>
-            <div className="text-xs text-(--dk-slate)">
-              Configure your account, privacy, and appearance.
+          <div className="h-0.5 w-full bg-(--dk-sky)/65" />
+          <div className="flex items-center gap-2 px-3 py-2 sm:px-5 sm:py-3">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl hover:bg-(--dk-mist)/70 transition"
+              aria-label="Go back"
+            >
+              <ArrowLeft size={18} className="text-(--dk-ink)" />
+            </button>
+            <div>
+              <div className="text-sm font-semibold text-(--dk-ink)">Settings</div>
+              <div className="text-xs text-(--dk-slate)">Account, privacy &amp; appearance</div>
             </div>
           </div>
         </div>
@@ -173,6 +186,29 @@ export default function SettingsPage() {
             </div>
           </SectionBlock>
 
+          <SectionBlock title="Support" subtitle="Guides and help">
+            <button
+              type="button"
+              onClick={() => setShowTutorial(true)}
+              className="flex items-center gap-3 px-4 py-4 hover:bg-(--dk-sky)/8 transition w-full text-left"
+            >
+              <div className="h-9 w-9 rounded-xl bg-(--dk-sky)/15 text-(--dk-ink) flex items-center justify-center">
+                <BookOpen size={18} />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-(--dk-ink)">Tutorial</div>
+                <div className="text-xs text-(--dk-slate)">Replay the getting started guide</div>
+              </div>
+              <ArrowRight size={16} className="text-(--dk-slate)" />
+            </button>
+            <SettingsRow
+              title="Help & FAQ"
+              subtitle="Common questions and contact info"
+              href="/settings/help"
+              icon={<HelpCircle size={18} />}
+            />
+          </SectionBlock>
+
           <SectionBlock
             title="Danger zone"
             subtitle="Irreversible actions"
@@ -199,6 +235,11 @@ export default function SettingsPage() {
           </SectionBlock>
         </div>
       </div>
+
+      <TutorialOverlay
+        open={showTutorial}
+        onClose={() => setShowTutorial(false)}
+      />
     </main>
   )
 }

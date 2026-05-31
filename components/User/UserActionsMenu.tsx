@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
-import { MoreVertical } from "lucide-react"
+import { MoreVertical, Settings } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
@@ -24,6 +24,7 @@ export default function UserActionsMenu({
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const [selfOpen, setSelfOpen] = useState(false)
   const [busy, setBusy] = useState(false)
 
   const [isInCloseFriends, setIsInCloseFriends] = useState(
@@ -39,6 +40,7 @@ export default function UserActionsMenu({
   useEffect(() => {
     setIsInCloseFriends(initialInCloseFriends)
     setOpen(false)
+    setSelfOpen(false)
     setReportOpen(false)
     setBlockOpen(false)
   }, [userKey, initialInCloseFriends])
@@ -107,7 +109,7 @@ export default function UserActionsMenu({
           e.preventDefault()
           e.stopPropagation()
           if (isSelf) {
-            router.push("/settings")
+            setSelfOpen((v) => !v)
             return
           }
           if (!disabled) setOpen((v) => !v)
@@ -118,6 +120,26 @@ export default function UserActionsMenu({
       >
         <MoreVertical size={18} className="text-(--dk-slate)" />
       </button>
+
+      {/* Self modal */}
+      {isSelf && selfOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px]"
+            onClick={() => setSelfOpen(false)}
+          />
+          <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-56 rounded-2xl border border-(--dk-ink)/10 bg-(--dk-paper) shadow-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => { setSelfOpen(false); router.push("/settings") }}
+              className="w-full px-4 py-4 text-left text-sm font-medium flex items-center gap-3 hover:bg-(--dk-mist)/60 transition text-(--dk-ink)"
+            >
+              <Settings size={16} className="text-(--dk-slate)" />
+              Settings
+            </button>
+          </div>
+        </>
+      )}
 
       {!isSelf && open ? (
         <div className="absolute right-0 mt-2 w-56 rounded-xl border border-(--dk-ink)/10 bg-(--dk-paper) shadow-lg overflow-hidden z-9999">

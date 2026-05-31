@@ -140,7 +140,6 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   const qc = useQueryClient()
   const mediaInputRef = useRef<HTMLInputElement>(null)
   const savingRef = useRef(false)
-  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const blocksRef = useRef<EditorBlock[]>([])
   const privacyRef = useRef<PrivacyValue>("public")
 
@@ -182,12 +181,6 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     inputRefs.current.push(createRef())
   }
   inputRefs.current.length = blocks.length
-
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-    }
-  }, [])
 
   // ── Save ──────────────────────────────────────────────────────────────────
 
@@ -282,9 +275,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   const scheduleSave = useCallback(() => {
     setIsDirty(true)
     setSavedOk(false)
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-    autoSaveTimerRef.current = setTimeout(doSave, 1000)
-  }, [doSave])
+  }, [])
 
   // ── Undo ──────────────────────────────────────────────────────────────────
 
@@ -658,21 +649,6 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     if (files.length) handleMediaFiles(files)
   }
 
-  function saveNow() {
-    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-    doSave()
-  }
-
-  const saveStatus = saving
-    ? "Saving…"
-    : saveError
-    ? saveError
-    : savedOk && !isDirty
-    ? "Saved"
-    : isDirty
-    ? "Unsaved changes"
-    : ""
-
   const contentBlocks = blocks.filter((b) => b.type !== "image")
   const hasContent =
     contentBlocks.some(
@@ -696,7 +672,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
         }}
       />
 
-      {/* Top bar: formatting toolbar + save */}
+      {/* Top bar: formatting toolbar + undo + publish */}
       <div className="flex items-center gap-2 px-3 py-2 sm:px-5 border-b border-(--dk-ink)/8 min-w-0">
         <div className="flex items-center gap-0.5 overflow-x-auto scrollbar-none min-w-0 flex-1">
           {(() => {
@@ -724,7 +700,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                   ref={linkBtnRef}
                   type="button"
                   onMouseDown={(e) => { e.preventDefault(); isLink ? ae?.chain().focus().unsetLink().run() : openLinkPopup() }}
-                  title={isLink ? "Remove link" : "Insert link (/link)"}
+                  title={isLink ? "Remove link" : "Insert link"}
                   className={[
                     "flex h-6 w-6 items-center justify-center rounded transition-colors",
                     isLink ? "bg-(--dk-sky)/15 text-(--dk-sky)" : "text-(--dk-slate) hover:bg-(--dk-mist) hover:text-(--dk-ink)",
@@ -736,7 +712,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
             )
           })()}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
             onClick={handleUndo}
@@ -746,27 +722,16 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
           >
             <RotateCcw size={13} />
           </button>
-          {saveStatus && (
-            <span
-              className={[
-                "text-xs",
-                saveError
-                  ? "text-(--dk-error)"
-                  : savedOk && !isDirty
-                  ? "text-(--dk-sky)"
-                  : "text-(--dk-slate)",
-              ].join(" ")}
-            >
-              {saveStatus}
-            </span>
+          {saveError && (
+            <span className="hidden sm:inline text-xs text-(--dk-error) max-w-[120px] truncate">{saveError}</span>
           )}
           <button
             type="button"
-            onClick={saveNow}
-            disabled={saving || !isDirty}
-            className="rounded-md bg-(--dk-sky) px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-(--dk-sky)/90 disabled:opacity-30"
+            onClick={doSave}
+            disabled={saving}
+            className="rounded-md bg-(--dk-sky) px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-(--dk-sky)/90 disabled:opacity-60"
           >
-            Save
+            {saving ? "Publishing…" : savedOk && !isDirty ? "Saved ✓" : "Publish"}
           </button>
         </div>
       </div>
@@ -1135,10 +1100,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
         <PrivacyPicker
           compact
           value={privacy}
-          onChange={(v) => {
-            setPrivacy(v)
-            scheduleSave()
-          }}
+          onChange={(v) => { setPrivacy(v); scheduleSave() }}
         />
       </div>
 

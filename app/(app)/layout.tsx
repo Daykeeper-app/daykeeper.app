@@ -2,6 +2,7 @@ import SidebarNav from "@/components/Navbar/SidebarNav"
 import MobileNav from "@/components/Navbar/MobileNav"
 import RightPanel from "@/components/Feed/RightPanel"
 import { AuthProvider } from "@/components/Auth/AuthProvider"
+import TutorialGate from "@/components/common/TutorialGate"
 
 export default function MainLayout({
   children,
@@ -19,6 +20,7 @@ export default function MainLayout({
         </div>
 
         <MobileNav />
+        <TutorialGate />
       </div>
     </AuthProvider>
   )
