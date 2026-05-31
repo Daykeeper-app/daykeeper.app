@@ -646,7 +646,7 @@ const TiptapEditor = forwardRef<TiptapEditorHandle, Props>(function TiptapEditor
     <div className="tiptap-editor relative">
       <BubbleMenu
         editor={editor}
-        tippyOptions={{ zIndex: 9999 }}
+        style={{ zIndex: 9999 }}
         shouldShow={({ editor, state }: { editor: any; state: any }) => {
           if (editor.isActive("codeBlock")) return false
           const { from, to } = state.selection
