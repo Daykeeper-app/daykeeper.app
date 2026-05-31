@@ -230,7 +230,7 @@ export default function UserDayTasks({
           return (
             <div key={id || `task-${idx}`} className="space-y-1">
               {rowErr ? (
-                <div className="text-xs text-red-600 px-1">{rowErr}</div>
+                <div className="text-xs text-(--dk-error) px-1">{rowErr}</div>
               ) : null}
 
               <UserDayListRow

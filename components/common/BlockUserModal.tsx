@@ -105,7 +105,7 @@ export default function BlockUserModal({ username, open, onClose }: Props) {
               </p>
 
               {error ? (
-                <div className="mt-2 text-sm text-red-600">{error}</div>
+                <div className="mt-2 text-sm text-(--dk-error)">{error}</div>
               ) : null}
 
               <div className="mt-4 flex justify-end gap-2">

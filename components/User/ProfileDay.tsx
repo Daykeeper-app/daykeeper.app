@@ -2,17 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
-import { Plus } from "lucide-react"
 
 import PostsHeader from "@/components/User/PostsHeader"
 import ProfileDaySkeleton from "@/components/User/ProfileDaySkeleton"
+import DayPageEditor from "@/components/DayPage/DayPageEditor"
+import DayPageBlocksView from "@/components/DayPage/DayPageBlocksView"
+import DayPageLikeBar from "@/components/DayPage/DayPageLikeBar"
 
-import UserDaySection from "@/components/UserDay/UserDaySection"
-import UserDayTasks from "@/components/UserDay/UserDayTasks"
-import UserDayEvents from "@/components/UserDay/UserDayEvents"
-import UserDayPosts from "@/components/UserDay/UserDayPosts"
-
-import { useProfileDay } from "@/hooks/useProfileDay"
+import { useUserProfile } from "@/hooks/useUserProfile"
+import { useOwnDayPage, useUserDayPage } from "@/hooks/useDayPage"
 import { isSameDay, parseDDMMYYYY, startOfDay, toDDMMYYYY } from "@/lib/date"
 import { useDelayedRender } from "@/hooks/useDelayedRender"
 
@@ -38,68 +36,50 @@ export default function ProfileDaySections({ username, className }: Props) {
     return startOfDay(new Date())
   })
 
-  const {
-    loading,
-    error,
-    user,
-    stats,
-    canView,
+  const dateParam = useMemo(() => toDDMMYYYY(selectedDate), [selectedDate])
 
-    tasks,
-    events,
-    posts,
+  const { data: user, isLoading: userLoading, error: userError } = useUserProfile(username)
 
-    tasksMeta,
-    eventsMeta,
-    postsMeta,
+  const isSelf = user?.follow_info === "same_user"
+  const canView = !!user && (!user.private || !!user.isFollowing || isSelf)
 
-    loadMoreTasks,
-    loadMoreEvents,
-    loadMorePosts,
+  // Only enable the relevant hook after user profile resolves
+  const ownPageQ = useOwnDayPage(user != null && isSelf ? dateParam : "")
+  const userPageQ = useUserDayPage(
+    user != null && !isSelf ? username : null,
+    dateParam,
+  )
 
-    hasMoreTasks,
-    hasMoreEvents,
-    hasMorePosts,
-
-    loadingMoreTasks,
-    loadingMoreEvents,
-    loadingMorePosts,
-
-    collapseTasks,
-    collapseEvents,
-    collapsePosts,
-    reloadAll,
-  } = useProfileDay(username, urlDateParam)
+  const pageLoading = user != null
+    ? (isSelf ? ownPageQ.isLoading : userPageQ.isLoading)
+    : false
+  const loading = userLoading || pageLoading
+  const error = userError ? "Failed to load profile." : null
 
   const setDate = useCallback(
     (d: Date) => {
       const next = startOfDay(d)
       setSelectedDate(next)
-
       const qs = new URLSearchParams(searchParams.toString())
       qs.set("date", toDDMMYYYY(next))
-
       router.replace(`${pathname}?${qs.toString()}`, { scroll: false })
     },
-    [router, pathname, searchParams]
+    [router, pathname, searchParams],
   )
 
   useEffect(() => {
     if (!urlDateParam) return
     const parsed = parseDDMMYYYY(urlDateParam)
     if (!parsed) return
-
     setSelectedDate((prev) =>
-      isSameDay(prev, parsed) ? prev : startOfDay(parsed)
+      isSameDay(prev, parsed) ? prev : startOfDay(parsed),
     )
   }, [urlDateParam])
 
   useEffect(() => {
     if (typeof window === "undefined") return
-
     const sp = new URLSearchParams(window.location.search)
     if (sp.get("date")) return
-
     const qs = new URLSearchParams(searchParams.toString())
     qs.set("date", toDDMMYYYY(startOfDay(new Date())))
     router.replace(`${pathname}?${qs.toString()}`, { scroll: false })
@@ -111,62 +91,36 @@ export default function ProfileDaySections({ username, className }: Props) {
       next.setDate(next.getDate() + days)
       setDate(next)
     },
-    [selectedDate, setDate]
+    [selectedDate, setDate],
   )
 
   const isToday = useMemo(
     () => isSameDay(selectedDate, new Date()),
-    [selectedDate]
-  )
-  const isSelf = user?.follow_info === "same_user"
-  const dateParamForCreate = useMemo(() => {
-    const d = selectedDate
-    const yyyy = d.getFullYear()
-    const mm = String(d.getMonth() + 1).padStart(2, "0")
-    const dd = String(d.getDate()).padStart(2, "0")
-    return `${yyyy}-${mm}-${dd}`
-  }, [selectedDate])
-
-  const addButton = useCallback(
-    (href: string) => (
-      <button
-        type="button"
-        onClick={() => router.push(href)}
-        className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-(--dk-sky)/15 text-(--dk-sky) transition hover:bg-(--dk-sky)/25"
-        aria-label="Create new"
-      >
-        <Plus size={14} />
-      </button>
-    ),
-    [router]
+    [selectedDate],
   )
 
-  // Use real totals from API when available (posts totalCount too)
-  const entriesCount =
-    (stats?.tasksCount ?? tasks.length) +
-    (stats?.eventsCount ?? events.length) +
-    (postsMeta?.totalCount ?? posts.length)
-  const visibleEntriesCount = canView ? entriesCount : 0
   const readyToShowSkeleton = useDelayedRender(200)
   const showSkeleton = loading && readyToShowSkeleton
 
+  const page = isSelf ? ownPageQ.data : userPageQ.data
+
   return (
     <section className={className}>
-        <PostsHeader
-          selectedDate={selectedDate}
-          onChangeDate={changeDate}
-          onSelectDate={setDate}
-          isToday={isToday}
-          loading={loading}
-          error={error}
-          usersCount={visibleEntriesCount}
-          onRetry={() => setDate(selectedDate)}
-        />
+      <PostsHeader
+        selectedDate={selectedDate}
+        onChangeDate={changeDate}
+        onSelectDate={setDate}
+        isToday={isToday}
+        loading={loading}
+        error={error}
+        usersCount={page?.blocks?.length ?? 0}
+        onRetry={() => setDate(selectedDate)}
+      />
 
       {showSkeleton ? <ProfileDaySkeleton /> : null}
 
       {!loading && error && (
-        <div className="px-4 py-6 text-sm text-red-500 sm:px-5">{error}</div>
+        <div className="px-4 py-6 text-sm text-(--dk-error) sm:px-5">{error}</div>
       )}
 
       {!loading && !error && (
@@ -182,63 +136,26 @@ export default function ProfileDaySections({ username, className }: Props) {
                 </div>
               </div>
             </div>
+          ) : isSelf ? (
+            <DayPageEditor dateParam={dateParam} initialPage={ownPageQ.data} />
           ) : (
-            <>
-              <UserDaySection
-                title="Tasks"
-                count={stats?.tasksCount ?? 0}
-                action={
-                  isSelf
-                    ? addButton(`/day/tasks/create?date=${dateParamForCreate}`)
-                    : undefined
-                }
-              >
-                <UserDayTasks
-                  tasks={tasks}
-                  pagination={tasksMeta}
-                  hasMore={hasMoreTasks}
-                  loadingMore={loadingMoreTasks}
-                  onLoadMore={loadMoreTasks}
-                  onCollapse={collapseTasks}
-                />
-              </UserDaySection>
-
-              <UserDaySection
-                title="Events"
-                count={stats?.eventsCount ?? 0}
-                action={
-                  isSelf
-                    ? addButton(`/day/events/create?date=${dateParamForCreate}`)
-                    : undefined
-                }
-              >
-                <UserDayEvents
-                  events={events}
-                  pagination={eventsMeta}
-                  hasMore={hasMoreEvents}
-                  loadingMore={loadingMoreEvents}
-                  onLoadMore={loadMoreEvents}
-                  onCollapse={collapseEvents}
-                />
-              </UserDaySection>
-
-              {/* UPDATED: posts now use infinite scroll props */}
-              <UserDaySection
-                title="Posts"
-                count={postsMeta?.totalCount ?? posts.length}
-                action={isSelf ? addButton("/post/create") : undefined}
-              >
-                <UserDayPosts
-                  posts={posts}
-                  pagination={postsMeta}
-                  hasMore={hasMorePosts}
-                  loadingMore={loadingMorePosts}
-                  onLoadMore={loadMorePosts}
-                  onCollapse={collapsePosts}
-                  onRefreshMedia={reloadAll}
-                />
-              </UserDaySection>
-            </>
+            <div>
+              {page ? (
+                <>
+                  <DayPageBlocksView blocks={page.blocks ?? []} />
+                  <DayPageLikeBar
+                    pageId={page._id}
+                    likesCount={page.likesCount ?? 0}
+                    commentsCount={page.commentsCount ?? 0}
+                    userLiked={!!page.userLiked}
+                  />
+                </>
+              ) : (
+                <div className="px-4 py-8 text-center text-sm italic text-(--dk-slate)">
+                  No day page for this date.
+                </div>
+              )}
+            </div>
           )}
         </>
       )}

@@ -188,7 +188,7 @@ export default function EditPostPage() {
     return (
       <main className="pb-20 lg:pb-0">
         <div className="max-w-2xl mx-auto border-x border-(--dk-ink)/10 bg-(--dk-paper) min-h-screen">
-          <div className="px-4 py-6 text-sm text-red-500">
+          <div className="px-4 py-6 text-sm text-(--dk-error)">
             You don’t have permission to edit this post.
           </div>
         </div>
@@ -222,7 +222,7 @@ export default function EditPostPage() {
 
         <div className="px-4 py-4 space-y-5">
           {error ? (
-            <div className="rounded-xl border border-(--dk-ink)/10 bg-(--dk-paper) p-3 text-sm text-red-600">
+            <div className="rounded-xl border border-(--dk-ink)/10 bg-(--dk-paper) p-3 text-sm text-(--dk-error)">
               {error}
             </div>
           ) : null}

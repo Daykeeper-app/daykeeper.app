@@ -24,10 +24,11 @@ export default function SearchFiltersRow({
       : "All users"
 
   return (
-    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-      <label className="group relative flex items-center rounded-lg bg-(--dk-paper)/70 px-3 py-2 text-sm text-(--dk-ink) hover:bg-(--dk-sky)/14 focus-within:bg-(--dk-sky)/14">
-        <span className="mr-2 shrink-0 font-medium text-(--dk-slate)">Sort:</span>
-        <span className="min-w-0 flex-1 truncate pr-6">{orderLabel}</span>
+    <div className="flex shrink-0 items-center gap-1.5">
+      <div className="h-4 w-px bg-(--dk-ink)/15 shrink-0" />
+
+      <label className="group relative flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-(--dk-slate) hover:bg-(--dk-mist)/70 hover:text-(--dk-ink) focus-within:bg-(--dk-mist)/70 cursor-pointer whitespace-nowrap transition">
+        <span className="font-medium">{orderLabel}</span>
         <select
           aria-label="Sort results"
           value={order}
@@ -39,9 +40,8 @@ export default function SearchFiltersRow({
         </select>
       </label>
 
-      <label className="group relative flex items-center rounded-lg bg-(--dk-paper)/70 px-3 py-2 text-sm text-(--dk-ink) hover:bg-(--dk-sky)/14 focus-within:bg-(--dk-sky)/14">
-        <span className="mr-2 shrink-0 font-medium text-(--dk-slate)">Filter:</span>
-        <span className="min-w-0 flex-1 truncate pr-6">{followingLabel}</span>
+      <label className="group relative flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-(--dk-slate) hover:bg-(--dk-mist)/70 hover:text-(--dk-ink) focus-within:bg-(--dk-mist)/70 cursor-pointer whitespace-nowrap transition">
+        <span className="font-medium">{followingLabel}</span>
         <select
           aria-label="Filter results"
           value={following || "default"}

@@ -1,18 +1,16 @@
 "use client"
 
 import type { SearchType } from "@/hooks/useSearch"
-import {
-  Users,
-  FileText,
-  CalendarDays,
-  CheckSquare,
-} from "lucide-react"
+import { Users, BookOpen } from "lucide-react"
 
 function TypeIcon({ type }: { type: SearchType }) {
   if (type === "User") return <Users size={16} />
-  if (type === "Post") return <FileText size={16} />
-  if (type === "Event") return <CalendarDays size={16} />
-  return <CheckSquare size={16} />
+  return <BookOpen size={16} />
+}
+
+function typeLabel(type: SearchType) {
+  if (type === "User") return "People"
+  return "Day Pages"
 }
 
 export default function SearchTypePills({
@@ -22,10 +20,10 @@ export default function SearchTypePills({
   value: SearchType
   onChange: (t: SearchType) => void
 }) {
-  const types: SearchType[] = ["Post", "User", "Event", "Task"]
+  const types: SearchType[] = ["DayPage", "User"]
 
   return (
-    <div className="grid w-full grid-cols-4 gap-2">
+    <div className="flex shrink-0 items-center gap-1.5">
       {types.map((t) => {
         const active = t === value
         return (
@@ -33,14 +31,14 @@ export default function SearchTypePills({
             key={t}
             onClick={() => onChange(t)}
             className={[
-              "inline-flex w-full items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm transition",
+              "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition whitespace-nowrap",
               active
-                ? "bg-(--dk-sky)/18 text-(--dk-ink)"
-                : "bg-(--dk-paper)/70 text-(--dk-slate) hover:bg-(--dk-sky)/14 hover:text-(--dk-ink)",
+                ? "bg-(--dk-sky)/15 text-(--dk-sky)"
+                : "text-(--dk-slate) hover:bg-(--dk-mist)/70 hover:text-(--dk-ink)",
             ].join(" ")}
           >
             <TypeIcon type={t} />
-            {t}
+            {typeLabel(t)}
           </button>
         )
       })}

@@ -261,7 +261,7 @@ export default function EditEventPage() {
         )}
 
         {!loading && error && (
-          <div className="px-4 py-6 text-sm text-red-500">{error}</div>
+          <div className="px-4 py-6 text-sm text-(--dk-error)">{error}</div>
         )}
 
         {!loading && !error && ev && (
@@ -351,7 +351,7 @@ export default function EditEventPage() {
               </div>
 
               {!rangeValid ? (
-                <div className="text-xs text-red-600">
+                <div className="text-xs text-(--dk-error)">
                   End must be after start.
                 </div>
               ) : null}

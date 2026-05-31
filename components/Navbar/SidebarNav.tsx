@@ -3,13 +3,19 @@
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, Search, Bell, User, Settings } from "lucide-react"
+import { Users, Search, Bell, User, Settings, BookOpen } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 import { useMe } from "@/lib/useMe"
 import { useNotifications } from "@/hooks/useNotifications"
-import CreateMenuButton from "@/components/Navbar/CreateMenuButton"
 
-const NAV: any = [
+type NavItem = {
+  label: string
+  href: string
+  icon: LucideIcon
+}
+
+const NAV: NavItem[] = [
   { label: "Feed", href: "/feed", icon: Users },
   { label: "Search", href: "/search", icon: Search },
   { label: "Notifications", href: "/notifications", icon: Bell },
@@ -66,7 +72,7 @@ export default function SidebarNav() {
               )
             })()}
 
-          {NAV.map((item: any) => {
+          {NAV.map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(item.href + "/")
             const Icon = item.icon
@@ -98,9 +104,20 @@ export default function SidebarNav() {
           })}
         </nav>
 
-        {/* Create button */}
+        {/* My Day button */}
         <div className="px-3 py-2">
-          <CreateMenuButton variant="desktop" />
+          <Link
+            href="/day"
+            className={[
+              "w-full py-3.5 rounded-xl flex justify-center items-center gap-2 font-medium transition",
+              pathname === "/day" || pathname.startsWith("/day/")
+                ? "bg-(--dk-sky)/15 text-(--dk-sky)"
+                : "bg-(--dk-sky) text-white hover:opacity-95",
+            ].join(" ")}
+          >
+            <BookOpen size={20} />
+            My Day
+          </Link>
         </div>
       </div>
     </aside>

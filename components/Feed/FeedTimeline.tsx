@@ -69,7 +69,7 @@ export default function FeedTimeline({
       {showSkeleton && <FeedTimelineSkeleton />}
 
       {!loading && data.length > 0 && (
-        <div className="space-y-8 py-5">
+        <div className="divide-y divide-(--dk-ink)/8 sm:divide-y-0 sm:space-y-8 sm:py-5">
           {data.map((userDay, idx) => (
             <div key={userDay?.userId ? `u-${userDay.userId}` : `u-fallback-${idx}`}>
               <FeedUserDay
@@ -78,12 +78,12 @@ export default function FeedTimeline({
                 onRefreshMedia={onRefreshMedia}
               />
               {idx < data.length - 1 ? (
-                <div className="mx-3 sm:mx-6 mt-4 h-px bg-(--dk-ink)/10" />
+                <div className="hidden sm:block mx-6 mt-4 h-px bg-(--dk-ink)/10" />
               ) : null}
             </div>
           ))}
 
-          <div className="pl-0 sm:pl-11 pt-2">
+          <div className="px-4 sm:pl-11 pt-2">
             {error && onRetry ? (
               <button
                 onClick={onRetry}

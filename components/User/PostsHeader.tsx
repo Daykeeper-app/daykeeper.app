@@ -98,14 +98,15 @@ export default function FeedHeader({
 
   return (
     <div className="sticky top-0 bg-(--dk-paper)/95 backdrop-blur-md border-b border-(--dk-ink)/10 z-10">
-      <div className="px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="h-0.5 w-full bg-(--dk-sky)/65" />
+      <div className="px-3 py-2 sm:px-4 sm:py-4">
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => onChangeDate(-1)}
-            className="p-2 hover:bg-(--dk-mist) rounded-lg transition cursor-pointer"
+            className="p-1.5 hover:bg-(--dk-mist) rounded-lg transition cursor-pointer"
             aria-label="Previous day"
           >
-            <ChevronLeft size={20} className="text-(--dk-slate)" />
+            <ChevronLeft size={18} className="text-(--dk-slate)" />
           </button>
 
           <div className="flex-1 text-center relative" ref={popoverRef}>
@@ -116,10 +117,10 @@ export default function FeedHeader({
               aria-label="Pick a date"
               aria-expanded={open}
             >
-              <p className="text-sm font-semibold text-(--dk-ink)">
+              <p className="text-[13px] font-semibold text-(--dk-ink) sm:text-sm">
                 {formatDate(selectedDate)}
               </p>
-              <p className="text-xs text-(--dk-slate)">
+              <p className="hidden sm:block text-xs text-(--dk-slate)">
                 {selectedDate.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -172,10 +173,10 @@ export default function FeedHeader({
 
           <button
             onClick={() => onChangeDate(1)}
-            className="p-2 hover:bg-(--dk-mist) rounded-lg transition cursor-pointer"
+            className="p-1.5 hover:bg-(--dk-mist) rounded-lg transition cursor-pointer"
             aria-label="Next day"
           >
-            <ChevronRight size={20} className="text-(--dk-slate)" />
+            <ChevronRight size={18} className="text-(--dk-slate)" />
           </button>
         </div>
       </div>

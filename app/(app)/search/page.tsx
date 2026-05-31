@@ -30,9 +30,7 @@ function cleanStr(v: string | null) {
 function normalizeTypeParam(v: string | null): SearchType {
   const raw = cleanStr(v).toLowerCase()
   if (raw === "user") return "User"
-  if (raw === "event") return "Event"
-  if (raw === "task") return "Task"
-  return "Post"
+  return "DayPage"
 }
 
 function normalizeOrderParam(v: string | null): SearchOrder {
@@ -128,7 +126,7 @@ function SearchPageInner() {
             />
           </div>
 
-          <div className="flex flex-col gap-2 px-4 pb-3 sm:px-5">
+          <div className="flex items-center gap-2 px-4 pb-3 sm:px-5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <SearchTypePills
               value={type}
               onChange={(t) => setParam({ type: t })}
@@ -145,7 +143,7 @@ function SearchPageInner() {
         {search.loadingFirst ? <SearchResultsSkeleton /> : null}
 
         {!search.loadingFirst && search.error ? (
-          <div className="px-4 py-6 text-sm text-red-500">{search.error}</div>
+          <div className="px-4 py-6 text-sm text-(--dk-error)">{search.error}</div>
         ) : null}
 
         {!search.loadingFirst && !search.error && !search.data.length ? (

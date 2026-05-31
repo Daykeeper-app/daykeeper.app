@@ -104,11 +104,11 @@ export default function FeedHeader({
     <div className="sticky top-0 z-10 border-b border-(--dk-ink)/10 bg-(--dk-paper)/96 backdrop-blur-md">
       <div className="h-0.5 w-full bg-(--dk-sky)/65" />
 
-      <div className="px-4 py-3 sm:px-5 sm:py-4">
-        <div className="flex items-center justify-between gap-3">
+      <div className="px-3 py-2 sm:px-5 sm:py-4">
+        <div className="flex items-center justify-between gap-2">
           <button
             onClick={() => onChangeDate(-1)}
-            className="rounded-lg p-1.5 transition hover:bg-(--dk-mist)/75 cursor-pointer sm:p-2"
+            className="rounded-lg p-1.5 transition hover:bg-(--dk-mist)/75 cursor-pointer"
             aria-label="Previous day"
           >
             <ChevronLeft size={18} className="text-(--dk-slate)" />
@@ -125,7 +125,7 @@ export default function FeedHeader({
               <p className="text-[13px] font-semibold text-(--dk-ink) sm:text-sm">
                 {formatDate(selectedDate)}
               </p>
-              <p className="text-[11px] text-(--dk-slate) sm:text-xs">
+              <p className="hidden sm:block text-xs text-(--dk-slate)">
                 {selectedDate.toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
@@ -178,7 +178,7 @@ export default function FeedHeader({
 
           <button
             onClick={() => onChangeDate(1)}
-            className="rounded-lg p-1.5 transition hover:bg-(--dk-mist)/75 disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer sm:p-2"
+            className="rounded-lg p-1.5 transition hover:bg-(--dk-mist)/75 disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer"
             aria-label="Next day"
             disabled={isToday}
           >
@@ -186,7 +186,7 @@ export default function FeedHeader({
           </button>
         </div>
 
-        <div className="mt-2 flex items-center justify-center gap-3 sm:mt-3">
+        <div className="mt-1 flex items-center justify-center gap-3 sm:mt-3">
           {loading ? (
             <span className="text-xs text-(--dk-slate)">Loading…</span>
           ) : error ? (
@@ -196,11 +196,11 @@ export default function FeedHeader({
             >
               Failed to load. Click to retry.
             </button>
-          ) : (
-            <span className="hidden text-xs text-(--dk-slate) sm:inline">
-              {usersCount} users posted
+          ) : usersCount > 0 ? (
+            <span className="text-xs text-(--dk-slate)">
+              {usersCount} {usersCount === 1 ? "page" : "pages"} from people you follow
             </span>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

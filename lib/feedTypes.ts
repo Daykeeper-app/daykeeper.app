@@ -28,17 +28,61 @@ export type FeedUserDayItem = {
   dateEnd?: string
 }
 
+// ─── DayPage types ───────────────────────────────────────────────────────────
+
+export type DayPageBlockType = "text" | "task" | "event" | "image"
+
+export type DayPageBlock = {
+  _id: string
+  type: DayPageBlockType
+  order: number
+  content?: string
+  title?: string
+  completed?: boolean
+  description?: string
+  dateStart?: string
+  dateEnd?: string
+  mediaId?: string
+  media?: {
+    _id?: string
+    key?: string
+    urls?: {
+      main?: string
+      thumb?: string
+    } | null
+  }
+}
+
+export type DayPage = {
+  _id: string
+  user: string
+  dateKey: string
+  date: string
+  privacy: string
+  blocks: DayPageBlock[]
+  status: string
+  likesCount: number
+  commentsCount: number
+  userLiked: boolean
+  isOwner: boolean
+}
+
+// ─── Feed types ──────────────────────────────────────────────────────────────
+
 export type FeedUserDay = {
   userId: string
   username: string
   userHandle: string
   profile_picture?: { url?: string } | null
   user_info?: any
+  // legacy counts (old feed format)
   postsCount?: number
   tasksCount?: number
   eventsCount?: number
   lastPostTime?: string
   data: FeedUserDayItem[]
+  // new DayPage field
+  page?: DayPage | null
 }
 
 export type FeedMedia = {
@@ -75,6 +119,8 @@ export type FeedPost = {
   edited_at: any
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 function hexFromBytes(bytes: number[]): string {
   return bytes
     .map((n) => Number(n).toString(16).padStart(2, "0"))
@@ -98,13 +144,11 @@ export function stableFeedId(value: unknown): string | null {
     if (out && out !== "[object Object]") return out
   }
 
-  // Mongo/BSON Buffer-like shape: { type: "Buffer", data: number[] }
   if (obj.type === "Buffer" && Array.isArray(obj.data)) {
     const bytes = obj.data.filter((n) => Number.isFinite(n)) as number[]
     if (bytes.length) return hexFromBytes(bytes)
   }
 
-  // Sometimes nested ids come as { id: {...} } or { _id: {...} }
   const nestedCandidates = [obj.id, obj._id, obj.buffer]
   for (const nested of nestedCandidates) {
     const out = stableFeedId(nested)
@@ -114,6 +158,39 @@ export function stableFeedId(value: unknown): string | null {
   return null
 }
 
+function normalizeBlock(raw: any): DayPageBlock {
+  return {
+    _id: stableFeedId(raw?._id) ?? stableFeedId(raw?.id) ?? "",
+    type: raw?.type ?? "text",
+    order: Number(raw?.order ?? 0),
+    content: raw?.content,
+    title: raw?.title,
+    completed: raw?.completed,
+    description: raw?.description,
+    dateStart: raw?.dateStart,
+    dateEnd: raw?.dateEnd,
+    mediaId: stableFeedId(raw?.mediaId) ?? undefined,
+    media: raw?.media ?? undefined,
+  }
+}
+
+function normalizeDayPage(raw: any): DayPage | null {
+  if (!raw) return null
+  return {
+    _id: stableFeedId(raw._id) ?? "",
+    user: stableFeedId(raw.user) ?? "",
+    dateKey: raw.dateKey ?? "",
+    date: raw.date ?? "",
+    privacy: raw.privacy ?? "public",
+    blocks: Array.isArray(raw.blocks) ? raw.blocks.map(normalizeBlock) : [],
+    status: raw.status ?? "public",
+    likesCount: Number(raw.likesCount ?? 0),
+    commentsCount: Number(raw.commentsCount ?? 0),
+    userLiked: !!raw.userLiked,
+    isOwner: !!raw.isOwner,
+  }
+}
+
 export function normalizeFeedPayload(json: any): FeedUserDay[] {
   const list =
     json?.data?.response?.data ?? json?.response?.data ?? json?.data ?? []
@@ -121,6 +198,10 @@ export function normalizeFeedPayload(json: any): FeedUserDay[] {
   if (!Array.isArray(list)) return []
 
   return list.map((u: any) => {
+    // New DayPage feed format: u.page
+    const page = u.page ? normalizeDayPage(u.page) : null
+
+    // Legacy feed format: u.data array of posts/tasks/events
     const items: FeedUserDayItem[] = Array.isArray(u.data)
       ? u.data
           .map((p: any) => {
@@ -199,6 +280,7 @@ export function normalizeFeedPayload(json: any): FeedUserDay[] {
       ),
       profile_picture: u.profile_picture ?? u.user?.profile_picture ?? null,
       data: items,
+      page,
     }
   })
 }

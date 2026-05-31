@@ -89,8 +89,10 @@ function ActivityCalendarSkeleton() {
 
 export default function ProfileActivityCalendar({
   username,
+  onDayClick,
 }: {
   username: string
+  onDayClick?: (isoDate: string) => void
 }) {
   const router = useRouter()
   const pathname = usePathname()
@@ -190,9 +192,12 @@ export default function ProfileActivityCalendar({
   const { weeks, monthLabels } = calendar
   const monthLabelByIndex = new Map(monthLabels.map((m) => [m.index, m.label]))
   const onSelectDay = (isoDate: string) => {
+    if (onDayClick) {
+      onDayClick(isoDate)
+      return
+    }
     const [yyyy, mm, dd] = isoDate.split("-")
     if (!yyyy || !mm || !dd) return
-
     const qs = new URLSearchParams(searchParams.toString())
     qs.set("date", `${dd}-${mm}-${yyyy}`)
     router.push(`${pathname}?${qs.toString()}`, { scroll: false })

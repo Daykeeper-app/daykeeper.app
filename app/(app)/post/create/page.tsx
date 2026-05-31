@@ -139,7 +139,7 @@ export default function CreatePostPage() {
 
         <div className="space-y-5 px-4 py-4 sm:px-5">
           {error ? (
-            <div className="rounded-lg bg-(--dk-mist)/45 p-3 text-sm text-red-600">
+            <div className="rounded-lg bg-(--dk-mist)/45 p-3 text-sm text-(--dk-error)">
               {error}
             </div>
           ) : null}

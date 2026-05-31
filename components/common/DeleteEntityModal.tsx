@@ -168,7 +168,7 @@ export default function DeleteEntityModal({
             >
               <div className="flex items-center justify-between gap-3 mb-3">
                 <div className="flex items-center gap-2">
-                  <Trash2 size={18} className="text-red-600" />
+                  <Trash2 size={18} className="text-(--dk-error)" />
                   <h2 className="text-(--dk-ink) font-semibold">
                     {confirmTitleFinal}
                   </h2>
@@ -185,7 +185,7 @@ export default function DeleteEntityModal({
               {confirmBodyFinal}
 
               {error ? (
-                <div className="mt-2 text-sm text-red-600">{error}</div>
+                <div className="mt-2 text-sm text-(--dk-error)">{error}</div>
               ) : null}
 
               <div className="mt-4 flex justify-end gap-2">
@@ -202,7 +202,7 @@ export default function DeleteEntityModal({
                   type="button"
                   onClick={confirmDelete}
                   disabled={busy}
-                  className="px-3 py-2 rounded-xl bg-red-600 text-white text-sm hover:opacity-95 transition disabled:opacity-60"
+                  className="px-3 py-2 rounded-xl bg-(--dk-error) text-white text-sm hover:opacity-95 transition disabled:opacity-60"
                 >
                   {busy ? "Deleting..." : confirmButtonTextFinal}
                 </button>
@@ -225,7 +225,7 @@ export default function DeleteEntityModal({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-2 mb-2">
-                <Trash2 size={18} className="text-red-600" />
+                <Trash2 size={18} className="text-(--dk-error)" />
                 <h2 className="text-(--dk-ink) font-semibold">
                   {successTitleFinal}
                 </h2>
@@ -237,7 +237,7 @@ export default function DeleteEntityModal({
                 <button
                   type="button"
                   onClick={() => setSuccessOpen(false)}
-                  className="px-3 py-2 rounded-xl bg-red-600 text-white text-sm hover:opacity-95 transition"
+                  className="px-3 py-2 rounded-xl bg-(--dk-error) text-white text-sm hover:opacity-95 transition"
                 >
                   OK
                 </button>

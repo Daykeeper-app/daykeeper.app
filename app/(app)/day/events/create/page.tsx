@@ -339,7 +339,7 @@ function CreateEventForm() {
           ) : null}
 
           {!rangeValid ? (
-            <div className="text-xs text-red-500">
+            <div className="text-xs text-(--dk-error)">
               End time must be after start time.
             </div>
           ) : null}

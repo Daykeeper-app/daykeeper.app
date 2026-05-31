@@ -150,7 +150,7 @@ export default function EventPage() {
         )}
 
         {!loading && error && (
-          <div className="px-4 py-6 text-sm text-red-500">{error}</div>
+          <div className="px-4 py-6 text-sm text-(--dk-error)">{error}</div>
         )}
 
         {!loading && !error && ev && (

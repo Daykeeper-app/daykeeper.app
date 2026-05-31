@@ -196,7 +196,7 @@ export default function DevicesPage() {
                 type="button"
                 onClick={revokeAll}
                 disabled={revokeAllLoading || !!busyId}
-                className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 px-3 py-2 text-xs text-red-700 bg-red-50 hover:bg-red-100 transition disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl border border-(--dk-error)/30 px-3 py-2 text-xs text-(--dk-error) bg-(--dk-error)/8 hover:bg-(--dk-error)/15 transition disabled:opacity-60"
               >
                 <Trash2 size={14} />
                 {revokeAllLoading ? "Revoking..." : "Revoke all"}

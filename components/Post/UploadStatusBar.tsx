@@ -35,9 +35,9 @@ export default function UploadStatusBar() {
           {active.length ? (
             <UploadCloud size={14} className="text-(--dk-sky)" />
           ) : error ? (
-            <XCircle size={14} className="text-red-500" />
+            <XCircle size={14} className="text-(--dk-error)" />
           ) : (
-            <CheckCircle2 size={14} className="text-green-600" />
+            <CheckCircle2 size={14} className="text-(--dk-success)" />
           )}
           {text}
         </div>
@@ -46,7 +46,7 @@ export default function UploadStatusBar() {
           <div
             className={[
               "h-1 rounded-full",
-              active.length ? "bg-(--dk-sky) animate-pulse w-2/3" : "bg-green-500 w-full",
+              active.length ? "bg-(--dk-sky) animate-pulse w-2/3" : "bg-(--dk-success) w-full",
             ].join(" ")}
           />
         </div>

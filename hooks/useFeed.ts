@@ -53,8 +53,9 @@ export function useFeed(selectedDate: Date) {
     initialPageParam: 1,
     queryFn: ({ pageParam }) => fetchFeedPage(dateParam, Number(pageParam)),
     getNextPageParam: (lastPage) => {
-      const page = lastPage?.page ?? 1
-      const totalPages = lastPage?.totalPages ?? 1
+      const r = (lastPage as any)?.data?.response ?? lastPage
+      const page = r?.page ?? 1
+      const totalPages = r?.totalPages ?? 1
       return page < totalPages ? page + 1 : undefined
     },
     enabled: !!dateParam,
@@ -81,9 +82,10 @@ export function useFeed(selectedDate: Date) {
   }, [q.data])
 
   const last = q.data?.pages?.[q.data.pages.length - 1]
-  const page = last?.page ?? 1
-  const totalPages = last?.totalPages ?? 1
-  const totalCount = last?.totalCount ?? 0
+  const lastR = (last as any)?.data?.response ?? last
+  const page = lastR?.page ?? 1
+  const totalPages = lastR?.totalPages ?? 1
+  const totalCount = lastR?.totalCount ?? 0
 
   const loadMore = useCallback(() => {
     if (q.hasNextPage && !q.isFetchingNextPage) q.fetchNextPage()

@@ -100,7 +100,7 @@ export default function CommentsSection({ postId }: { postId: string }) {
 
       <div className="px-4 pb-4">
         {formError ? (
-          <div className="mb-2 text-xs text-red-500">{formError}</div>
+          <div className="mb-2 text-xs text-(--dk-error)">{formError}</div>
         ) : null}
         <RichTextarea
           value={text}

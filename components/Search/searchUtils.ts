@@ -52,10 +52,7 @@ export function stableSearchId(value: unknown): string | null {
 
 export function getTitle(item: any, type: SearchType) {
   if (type === "User") return item?.displayName || item?.username || "User"
-  if (type === "Post") return item?.data || "Post"
-  if (type === "Event") return item?.title || item?.name || "Event"
-  if (type === "Task") return item?.title || item?.data || "Task"
-  return "Result"
+  return item?.dateKey || "Day Page"
 }
 
 export function getSubtitle(item: any, type: SearchType) {
@@ -67,10 +64,8 @@ export function getSubtitle(item: any, type: SearchType) {
 
   const ui = item?.user_info
   const display = ui?.displayName || (ui?.username ? `@${ui.username}` : "")
-  const privacy = item?.privacy || item?.status || ""
-  const created = item?.created_at || item?.date
-  const createdText = created ? new Date(created).toLocaleString() : ""
-  return [display, privacy, createdText].filter(Boolean).join(" • ")
+  const privacy = item?.privacy || ""
+  return [display, privacy].filter(Boolean).join(" • ")
 }
 
 export function getAvatar(item: any, type: SearchType) {
@@ -92,10 +87,11 @@ export function getHref(item: any, type: SearchType) {
     if (id) return `/${encodeURIComponent(id)}`
     return null
   }
-  const id = stableSearchId(item?._id) || stableSearchId(item?.id)
-  if (!id) return null
-  if (type === "Post") return `/post/${encodeURIComponent(id)}`
-  if (type === "Event") return `/day/events/${encodeURIComponent(id)}`
-  if (type === "Task") return `/day/tasks/${encodeURIComponent(id)}`
-  return null
+  // DayPage
+  const username = item?.user_info?.username
+  const dateKey: string = item?.dateKey ?? ""
+  if (!username || !dateKey) return null
+  const [y, m, d] = dateKey.split("-")
+  const ddmmyyyy = d && m && y ? `${d}-${m}-${y}` : ""
+  return ddmmyyyy ? `/${encodeURIComponent(username)}/day?date=${ddmmyyyy}` : `/${encodeURIComponent(username)}/day`
 }

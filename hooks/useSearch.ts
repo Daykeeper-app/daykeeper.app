@@ -8,7 +8,7 @@ import { useInfiniteQuery } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 
-export type SearchType = "Post" | "User" | "Event" | "Task"
+export type SearchType = "DayPage" | "User"
 export type SearchOrder = "recent" | "relevant"
 export type FollowingScope = "friends" | "following" | "followers"
 
@@ -24,9 +24,7 @@ export type SearchResponse = {
 function normalizeType(value: unknown): SearchType {
   const raw = String(value ?? "").trim().toLowerCase()
   if (raw === "user") return "User"
-  if (raw === "event") return "Event"
-  if (raw === "task") return "Task"
-  return "Post"
+  return "DayPage"
 }
 
 function normalizeOrder(value: unknown): SearchOrder {

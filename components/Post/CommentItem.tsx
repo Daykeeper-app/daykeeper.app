@@ -241,7 +241,7 @@ export default function CommentItem({ c }: { c: PostComment }) {
               <button
                 type="button"
                 onClick={deleteComment}
-                className="inline-flex items-center gap-1 text-red-500 hover:text-red-600 transition"
+                className="inline-flex items-center gap-1 text-(--dk-error) opacity-80 hover:opacity-100 transition"
               >
                 <Trash2 size={14} />
                 Delete
