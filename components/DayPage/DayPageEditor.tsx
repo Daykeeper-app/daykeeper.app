@@ -6,6 +6,7 @@ import {
   useRef,
   useEffect,
   createRef,
+  useMemo,
 } from "react"
 import {
   CheckSquare,
@@ -34,6 +35,8 @@ import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 import PrivacyPicker, { type PrivacyValue } from "@/components/common/PrivacyPicker"
 import TiptapEditor, { type TiptapEditorHandle, type SlashCommandType } from "@/components/common/TiptapEditor"
+import MediaLightbox from "@/components/Feed/MediaLightbox"
+import type { FeedMedia } from "@/lib/feedTypes"
 
 type BlockType = "text" | "task" | "event" | "image"
 
@@ -432,6 +435,30 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   // Only count blocks that have a working URL — broken/stranded blocks shouldn't
   // permanently prevent new uploads (they'll be purged on the next save anyway).
   const canAddMedia = imageBlocks.filter((b) => !b.uploading && b.mediaUrl).length < MAX_MEDIA
+
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
+  const lightboxMedia: FeedMedia[] = useMemo(
+    () =>
+      imageBlocks
+        .filter((b) => !b.uploading && !!b.mediaUrl)
+        .map((b, i) => ({
+          _id: b._id || `editor-media-${i}`,
+          type: b.mediaType || "image",
+          url: b.mediaUrl,
+          urls: b.mediaUrl ? { main: b.mediaUrl } : null,
+        })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [blocks],
+  )
+
+  function openMediaLightbox(block: EditorBlock, e: React.MouseEvent) {
+    e.stopPropagation()
+    const idx = lightboxMedia.findIndex((m) => m._id === block._id)
+    setLightboxIndex(idx >= 0 ? idx : 0)
+    setLightboxOpen(true)
+  }
 
   async function handleMediaFiles(files: FileList | File[]) {
     const fileArr = Array.from(files)
@@ -1025,7 +1052,11 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                     )
                   }
                   return (
-                    <div key={block.stableKey} className="group relative shrink-0 h-28 w-28">
+                    <div
+                      key={block.stableKey}
+                      className="group relative shrink-0 h-28 w-28 cursor-pointer"
+                      onClick={(e) => openMediaLightbox(block, e)}
+                    >
                       {block.mediaType === "video" ? (
                         <>
                           <video
@@ -1048,7 +1079,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                       )}
                       <button
                         type="button"
-                        onClick={() => removeById(block._id!)}
+                        onClick={(e) => { e.stopPropagation(); removeById(block._id!) }}
                         className="absolute right-1 top-1 rounded-lg bg-(--dk-paper)/80 p-1 text-(--dk-slate) opacity-0 backdrop-blur-sm transition hover:text-(--dk-error) group-hover:opacity-100"
                         aria-label="Remove"
                       >
@@ -1115,6 +1146,15 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
         />
       )}
 
+      {lightboxMedia.length > 0 && (
+        <MediaLightbox
+          open={lightboxOpen}
+          media={lightboxMedia}
+          index={lightboxIndex}
+          onClose={() => setLightboxOpen(false)}
+          onChangeIndex={setLightboxIndex}
+        />
+      )}
     </div>
   )
 }

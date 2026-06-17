@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { CheckSquare, Square, CalendarDays, Play } from "lucide-react"
-import type { DayPageBlock } from "@/lib/feedTypes"
+import type { DayPageBlock, FeedMedia } from "@/lib/feedTypes"
+import MediaLightbox from "@/components/Feed/MediaLightbox"
 
 function formatDateShort(iso?: string) {
   if (!iso) return ""
@@ -21,6 +23,9 @@ type Props = {
 }
 
 export default function DayPageBlocksView({ blocks, maxBlocks }: Props) {
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+
   const sorted = [...blocks].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
   const contentBlocks = sorted.filter((b) => b.type !== "image")
@@ -30,6 +35,26 @@ export default function DayPageBlocksView({ blocks, maxBlocks }: Props) {
   const hiddenCount = contentBlocks.length - visibleContent.length
 
   const isEmpty = visibleContent.length === 0 && imageBlocks.length === 0
+
+  // Build FeedMedia items for the lightbox (only blocks with a usable URL)
+  const mediaItems: FeedMedia[] = imageBlocks
+    .filter((b) => !!b.media?.urls?.main)
+    .map((b, i) => ({
+      _id: b._id || b.mediaId || `dayblock-${i}`,
+      type: (b.media as any)?.type === "video" ? "video" : "image",
+      url: b.media?.urls?.main,
+      urls: b.media?.urls ?? null,
+    }))
+
+  function openLightbox(block: DayPageBlock, e: React.MouseEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const idx = mediaItems.findIndex(
+      (m) => m._id === (block._id || block.mediaId),
+    )
+    setLightboxIndex(idx >= 0 ? idx : 0)
+    setLightboxOpen(true)
+  }
 
   if (isEmpty) {
     return (
@@ -128,9 +153,12 @@ export default function DayPageBlocksView({ blocks, maxBlocks }: Props) {
               const isVideo = (block.media as any)?.type === "video"
 
               return (
-                <div
+                <button
                   key={block._id || String(idx)}
-                  className="relative shrink-0 h-36 w-36 rounded-xl overflow-hidden bg-(--dk-mist)"
+                  type="button"
+                  onClick={(e) => openLightbox(block, e)}
+                  className="relative shrink-0 h-36 w-36 rounded-xl overflow-hidden bg-(--dk-mist) cursor-pointer focus:outline-none focus:ring-2 focus:ring-(--dk-sky)/60"
+                  aria-label="View media"
                 >
                   {isVideo ? (
                     <>
@@ -141,7 +169,7 @@ export default function DayPageBlocksView({ blocks, maxBlocks }: Props) {
                         playsInline
                         preload="metadata"
                       />
-                      <div className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/25 pointer-events-none">
                         <Play size={20} className="text-white" fill="white" />
                       </div>
                     </>
@@ -152,11 +180,21 @@ export default function DayPageBlocksView({ blocks, maxBlocks }: Props) {
                       className="h-full w-full object-cover"
                     />
                   )}
-                </div>
+                </button>
               )
             })}
           </div>
         </div>
+      )}
+
+      {mediaItems.length > 0 && (
+        <MediaLightbox
+          open={lightboxOpen}
+          media={mediaItems}
+          index={lightboxIndex}
+          onClose={() => setLightboxOpen(false)}
+          onChangeIndex={setLightboxIndex}
+        />
       )}
     </div>
   )
