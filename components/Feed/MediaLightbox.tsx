@@ -184,6 +184,7 @@ export default function MediaLightbox({
                     poster={poster || undefined}
                     controls
                     autoPlay
+                    playsInline
                     onLoadedData={recovery.onLoad}
                     onError={() => {
                       void recovery.onError()

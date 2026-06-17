@@ -6,6 +6,10 @@ const imgSrc = isDev
   ? "img-src 'self' data: blob: https: http://localhost:* http://127.0.0.1:*"
   : "img-src 'self' data: blob: https:"
 
+const mediaSrc = isDev
+  ? "media-src 'self' blob: https: http://localhost:* http://127.0.0.1:*"
+  : "media-src 'self' blob: https:"
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
@@ -15,6 +19,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       imgSrc,
+      mediaSrc,
       "font-src 'self' data:",
       "connect-src 'self' https://daykeeper-api.onrender.com http://localhost:3001 http://127.0.0.1:3001",
       "frame-ancestors 'none'",
