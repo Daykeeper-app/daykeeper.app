@@ -71,6 +71,7 @@ async function fetchPostDetail(postId: string): Promise<PostDetailResult> {
     edited_at: raw?.edited_at ?? "",
     time: "",
     content: String(raw.data || ""),
+    status: raw.status,
     media: Array.isArray(raw.media) ? raw.media : [],
     privacy: raw.privacy,
     likes: raw.likes ?? 0,

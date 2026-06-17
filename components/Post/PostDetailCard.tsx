@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { Heart, MessageCircle } from "lucide-react"
+import { Heart, MessageCircle, ShieldCheck } from "lucide-react"
 import FeedPostMediaStrip from "@/components/Feed/FeedPostMediaStrip"
 import { apiFetch } from "@/lib/authClient"
 import type { FeedPost } from "@/lib/feedTypes"
@@ -59,6 +59,13 @@ export default function PostDetailCard({ post, onRefreshMedia }: Props) {
           <p className="text-(--dk-ink) text-[17px] leading-relaxed whitespace-pre-wrap">
             <RichText text={String(post.content || "")} />
           </p>
+
+          {post.status === "pending" ? (
+            <div className="mt-2 flex items-center gap-2 rounded-lg bg-(--dk-sky)/10 px-3 py-2 text-xs text-(--dk-sky)">
+              <ShieldCheck size={13} />
+              <span>Your media is being reviewed and will be visible once approved.</span>
+            </div>
+          ) : null}
 
           <FeedPostMediaStrip
             media={post.media}

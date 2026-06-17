@@ -9,6 +9,7 @@ import {
   Flag,
   Pencil,
   Trash2,
+  ShieldCheck,
 } from "lucide-react"
 import FeedPostMediaStrip from "./FeedPostMediaStrip"
 import { apiFetch } from "@/lib/authClient"
@@ -213,6 +214,13 @@ export default function FeedPostItem({ post, isLast, onRefreshMedia }: Props) {
         <p className="mt-2 whitespace-pre-wrap text-[15px] leading-relaxed text-(--dk-ink)">
           <RichText text={String(post.content || "")} />
         </p>
+
+        {post.status === "pending" && isOwner ? (
+          <div className="mt-2 flex items-center gap-2 rounded-lg bg-(--dk-sky)/10 px-3 py-2 text-xs text-(--dk-sky)">
+            <ShieldCheck size={13} />
+            <span>Your media is being reviewed and will be visible once approved.</span>
+          </div>
+        ) : null}
 
         <FeedPostMediaStrip
           media={post.media}

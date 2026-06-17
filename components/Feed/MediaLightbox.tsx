@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import Image from "next/image"
-import { X, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, ChevronLeft, ChevronRight, Clock } from "lucide-react"
 import type { FeedMedia } from "@/lib/feedTypes"
 import {
   resolveMainMediaUrl,
@@ -189,6 +189,12 @@ export default function MediaLightbox({
                       void recovery.onError()
                     }}
                   />
+                ) : item.status === "pending" ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/70">
+                    <Clock size={28} className="animate-pulse" />
+                    <span className="text-sm font-medium">Video under review</span>
+                    <span className="text-xs text-white/50">It will be available once approved</span>
+                  </div>
                 ) : (
                   <div className="absolute inset-0 grid place-items-center text-sm text-white/70">
                     Video unavailable
@@ -208,6 +214,12 @@ export default function MediaLightbox({
                       void recovery.onError()
                     }}
                   />
+                ) : item.status === "pending" ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/70">
+                    <Clock size={28} className="animate-pulse" />
+                    <span className="text-sm font-medium">Media under review</span>
+                    <span className="text-xs text-white/50">It will be available once approved</span>
+                  </div>
                 ) : (
                   <div className="absolute inset-0 grid place-items-center text-sm text-white/70">
                     Media unavailable

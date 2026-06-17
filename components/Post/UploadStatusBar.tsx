@@ -25,8 +25,8 @@ export default function UploadStatusBar() {
   const text = active.length
     ? `Uploading ${active.length} post${active.length > 1 ? "s" : ""}...`
     : success.length
-      ? "Post uploaded"
-      : "Upload failed"
+      ? (success[0].message ?? "Post uploaded")
+      : (error?.message ?? "Upload failed")
 
   return (
     <div className="px-4 pt-4">

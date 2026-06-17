@@ -88,6 +88,7 @@ export type FeedUserDay = {
 export type FeedMedia = {
   _id: string
   type: "image" | "video" | string
+  status?: "pending" | "public" | "rejected" | string
   url?: string
   urls?: {
     main?: string
@@ -109,6 +110,7 @@ export type FeedPost = {
   date?: string
   content: string
   privacy: String
+  status?: "pending" | "public" | "rejected" | string
 
   media?: FeedMedia[]
 
@@ -225,6 +227,7 @@ export function normalizeFeedPayload(json: any): FeedUserDay[] {
                   ? p.media.map((m: any) => ({
                       _id: stableFeedId(m?._id) ?? "",
                       type: m.type,
+                      status: m.status,
                       url: m.url,
                       urls: m.urls ?? null,
                       thumbnailUrl: m.thumbnailUrl,

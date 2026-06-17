@@ -2,6 +2,7 @@
 
 import Image from "next/image"
 import { useMemo, useState } from "react"
+import { Clock } from "lucide-react"
 import type { FeedMedia } from "@/lib/feedTypes"
 import MediaLightbox from "./MediaLightbox"
 import {
@@ -147,6 +148,11 @@ function MediaTile({
             }}
           />
         )
+      ) : media.status === "pending" ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-(--dk-mist) text-(--dk-slate)">
+          <Clock size={20} className="animate-pulse" />
+          <span className="text-xs font-medium">Under review</span>
+        </div>
       ) : (
         <div className="flex h-full w-full items-center justify-center bg-(--dk-mist) text-xs text-(--dk-slate)">
           Media unavailable

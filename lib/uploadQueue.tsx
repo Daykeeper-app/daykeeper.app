@@ -9,6 +9,7 @@ type UploadJob = {
   id: string
   status: "uploading" | "success" | "error"
   message?: string
+  hasVideo?: boolean
   createdAt: number
 }
 
@@ -34,10 +35,12 @@ export function UploadQueueProvider({ children }: { children: React.ReactNode })
   const enqueuePostUpload = useCallback(
     async ({ data, privacy, files }: { data: string; privacy: string; files: File[] }) => {
       const id = makeId()
+      const hasVideo = files.some((f) => f.type.startsWith("video/"))
       const job: UploadJob = {
         id,
         status: "uploading",
         message: "Uploading post",
+        hasVideo,
         createdAt: Date.now(),
       }
 
@@ -60,7 +63,15 @@ export function UploadQueueProvider({ children }: { children: React.ReactNode })
         }
 
         setJobs((prev) =>
-          prev.map((j) => (j.id === id ? { ...j, status: "success" } : j))
+          prev.map((j) =>
+            j.id === id
+              ? {
+                  ...j,
+                  status: "success",
+                  message: j.hasVideo ? "Post submitted — video under review" : "Post uploaded",
+                }
+              : j
+          )
         )
 
         qc.invalidateQueries({ queryKey: ["feed"] })
