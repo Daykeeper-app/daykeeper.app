@@ -1,8 +1,7 @@
 "use client"
 
-import { Suspense, useMemo, useState } from "react"
+import { Suspense, useCallback, useMemo, useState } from "react"
 import Link from "next/link"
-import { Chrome } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { completeAuthLogin } from "@/lib/completeAuth"
 
@@ -13,7 +12,7 @@ import FormHeader from "@/components/Form/FormHeader"
 import FormField from "@/components/Form/FormField"
 import FormButton from "@/components/Form/FormButton"
 import FormDivider from "@/components/Form/FormDivider"
-import FormSocialButton from "@/components/Form/FormSocialButton"
+import GoogleSignInButton from "@/components/Form/GoogleSignInButton"
 import FormFooterLinks from "@/components/Form/FormFooterLinks"
 import FormLegalLinks from "@/components/Form/FormLegalLinks"
 import FormAlert from "@/components/Form/FormAlert"
@@ -76,6 +75,42 @@ function LoginForm() {
     }
   }
 
+  const onGoogleCredential = useCallback(
+    async (idToken: string) => {
+      setError(null)
+      setLoading(true)
+      try {
+        const res = await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken }),
+        })
+
+        const data = await res.json().catch(() => null)
+
+        if (!res.ok) {
+          setError(data?.error || "Google sign-in failed")
+          return
+        }
+
+        const token = data?.accessToken as string | undefined
+        if (!token) {
+          setError("Google sign-in returned no access token.")
+          return
+        }
+
+        await completeAuthLogin(token)
+        router.push("/")
+      } catch {
+        setError("Network error. Try again.")
+      } finally {
+        setLoading(false)
+      }
+    },
+    [router]
+  )
+
   const successText =
     message === "email-confirmed"
       ? "Email confirmed successfully. You can log in now."
@@ -135,9 +170,11 @@ function LoginForm() {
 
           <FormDivider />
 
-          <FormSocialButton icon={<Chrome size={18} />} onClick={() => {}}>
-            Continue with Google
-          </FormSocialButton>
+          <GoogleSignInButton
+            text="continue_with"
+            onCredential={onGoogleCredential}
+            onError={setError}
+          />
         </form>
       </FormCard>
 
