@@ -17,6 +17,8 @@ import PrivacyPicker, {
 } from "@/components/common/PrivacyPicker"
 import EditMediaDropzone from "@/components/Post/Edit/EditMediaDropzone"
 import { resolveMainMediaUrl } from "@/lib/media"
+import { PageSkeleton } from "@/components/common/LoadingSkeleton"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 const MAX_MEDIA = 5
 
@@ -178,7 +180,7 @@ export default function EditPostPage() {
     return (
       <main className="pb-20 lg:pb-0">
         <div className="max-w-2xl mx-auto border-x border-(--dk-ink)/10 bg-(--dk-paper) min-h-screen">
-          <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+          <PageSkeleton />
         </div>
       </main>
     )
@@ -266,7 +268,7 @@ export default function EditPostPage() {
             onClick={save}
             disabled={busy || totalAfter > MAX_MEDIA}
           >
-            {busy ? "Saving..." : "Save changes"}
+            {busy ? <LoadingSpinner /> : "Save changes"}
           </FormButton>
         </div>
       </div>

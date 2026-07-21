@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run check:loading-copy && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:loading-copy": "node scripts/check-loading-copy.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.16",

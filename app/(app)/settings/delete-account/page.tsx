@@ -7,6 +7,7 @@ import { ArrowLeft, Ban, MailCheck } from "lucide-react"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 import FormAlert from "@/components/Form/FormAlert"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type ApiError = { message?: string; reason?: string }
 
@@ -157,7 +158,7 @@ export default function DeleteAccountPage() {
               className="w-full rounded-lg bg-(--dk-paper)/80 px-4 py-3 text-sm font-medium text-(--dk-ink) transition disabled:cursor-not-allowed disabled:opacity-60 hover:bg-(--dk-mist)/70"
             >
               {requesting
-                ? "Sending code..."
+                ? <LoadingSpinner size={16} />
                 : codeSent
                   ? "Resend deletion code"
                   : "Send deletion code"}
@@ -208,7 +209,7 @@ export default function DeleteAccountPage() {
                   "1px solid color-mix(in srgb, var(--dk-error) 35%, transparent)",
               }}
             >
-              {deleting ? "Deleting..." : "Delete account"}
+              {deleting ? <LoadingSpinner size={16} /> : "Delete account"}
             </button>
           </div>
 

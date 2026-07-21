@@ -11,6 +11,8 @@ import FormAlert from "@/components/Form/FormAlert"
 import { AVATAR_FALLBACK } from "@/components/Search/searchUtils"
 import { resolveProfilePictureUrl } from "@/lib/media"
 import RichText from "@/components/common/RichText"
+import { CenteredSpinner } from "@/components/common/LoadingIndicator"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
 
 function normalizeUsername(param: unknown) {
   const raw = Array.isArray(param) ? param[0] : param
@@ -91,9 +93,7 @@ export default function FollowingPage() {
 
         <div className="pb-8">
           {profileQ.isLoading ? (
-            <div className="px-4 py-6 text-sm text-(--dk-slate)">
-              Loading profile...
-            </div>
+            <LoadingRows rows={2} />
           ) : null}
 
           {!profileQ.isLoading && !canView ? (
@@ -115,9 +115,7 @@ export default function FollowingPage() {
 
               <section className="border-t border-(--dk-ink)/10">
                 {loading ? (
-                  <div className="px-4 py-6 text-sm text-(--dk-slate)">
-                    Loading following...
-                  </div>
+                  <LoadingRows rows={5} />
                 ) : items.length === 0 ? (
                   <div className="px-4 py-6 text-sm text-(--dk-slate)">
                     Not following anyone yet.
@@ -155,9 +153,7 @@ export default function FollowingPage() {
                     })}
 
                     {loadingMore ? (
-                      <div className="px-4 py-4 text-sm text-(--dk-slate)">
-                        Loading more...
-                      </div>
+                      <CenteredSpinner className="px-4 py-4" />
                     ) : null}
                   </div>
                 )}

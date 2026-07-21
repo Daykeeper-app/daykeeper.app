@@ -12,6 +12,8 @@ import FormAlert from "@/components/Form/FormAlert"
 import { AVATAR_FALLBACK } from "@/components/Search/searchUtils"
 import { resolveProfilePictureUrl } from "@/lib/media"
 import RichText from "@/components/common/RichText"
+import { CenteredSpinner } from "@/components/common/LoadingIndicator"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
 
 export default function FollowRequestsPage() {
   const router = useRouter()
@@ -115,9 +117,7 @@ export default function FollowRequestsPage() {
 
           <section className="border-t border-(--dk-ink)/10">
             {loading ? (
-              <div className="px-4 py-6 text-sm text-(--dk-slate)">
-                Loading requests...
-              </div>
+              <LoadingRows rows={5} />
             ) : items.length === 0 ? (
               <div className="px-4 py-6 text-sm text-(--dk-slate)">
                 No follow requests right now.
@@ -181,9 +181,7 @@ export default function FollowRequestsPage() {
                 })}
 
                 {loadingMore ? (
-                  <div className="px-4 py-4 text-sm text-(--dk-slate)">
-                    Loading more...
-                  </div>
+                  <CenteredSpinner className="px-4 py-4" />
                 ) : null}
               </div>
             )}

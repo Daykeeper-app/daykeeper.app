@@ -43,6 +43,8 @@ export type SlashCommandType = "task" | "event" | "image" | "list" | "link"
 
 export interface TiptapEditorHandle {
   focus: () => void
+  /** Insert HTML at the end of the doc and leave the cursor after it. */
+  insertHtmlAtEnd: (html: string) => void
 }
 
 interface SlashItemBase {
@@ -145,10 +147,29 @@ function buildSlashExtension(cb: SuggestionCallbacks) {
                 const state = cb.getState?.()
                 if (!state || state.items.length === 0) return false
                 const { items, activeIndex } = state
-                if (event.key === "ArrowDown") { cb.setState?.({ ...state, activeIndex: (activeIndex + 1) % items.length }); return true }
-                if (event.key === "ArrowUp") { cb.setState?.({ ...state, activeIndex: (activeIndex - 1 + items.length) % items.length }); return true }
-                if (event.key === "Enter") { const item = items[activeIndex]; if (item) { cb.selectItem?.(item); return true } }
-                if (event.key === "Escape") { cb.setState?.(EMPTY_DROPDOWN); return true }
+                if (event.key === "ArrowDown") {
+                  event.preventDefault()
+                  cb.setState?.({ ...state, activeIndex: (activeIndex + 1) % items.length })
+                  return true
+                }
+                if (event.key === "ArrowUp") {
+                  event.preventDefault()
+                  cb.setState?.({ ...state, activeIndex: (activeIndex - 1 + items.length) % items.length })
+                  return true
+                }
+                if (event.key === "Enter") {
+                  const item = items[activeIndex]
+                  if (item) {
+                    event.preventDefault()
+                    cb.selectItem?.(item)
+                    return true
+                  }
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault()
+                  cb.setState?.(EMPTY_DROPDOWN)
+                  return true
+                }
                 return false
               },
               onExit() { cb.setState?.(EMPTY_DROPDOWN) },
@@ -173,6 +194,12 @@ function SlashDropdown({
   rect: DOMRect | null
   onSelect: (item: SlashItem) => void
 }) {
+  const activeItemRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    activeItemRef.current?.scrollIntoView({ block: "nearest" })
+  }, [activeIndex])
+
   if (!rect || items.length === 0) return null
 
   // Split into two groups for display
@@ -192,6 +219,8 @@ function SlashDropdown({
     return (
       <button
         key={item.title}
+        id={`slash-command-${globalIdx}`}
+        ref={active ? activeItemRef : undefined}
         type="button"
         role="option"
         aria-selected={active}
@@ -215,8 +244,10 @@ function SlashDropdown({
   return createPortal(
     <div
       style={style}
-      className="w-48 overflow-hidden rounded-xl border border-(--dk-ink)/10 bg-(--dk-paper) shadow-xl shadow-black/10 py-1"
+      className="w-48 max-h-80 overflow-y-auto rounded-xl border border-(--dk-ink)/10 bg-(--dk-paper) shadow-xl shadow-black/10 py-1"
       role="listbox"
+      aria-label="Editor commands"
+      aria-activedescendant={`slash-command-${activeIndex}`}
     >
       {blocks.length > 0 && (
         <>
@@ -370,13 +401,14 @@ interface Props {
   onSelectionChange?: () => void
   onArrowDown?: () => void
   onArrowUp?: () => void
+  onPasteFiles?: (files: File[]) => void
   placeholder?: string
   className?: string
   autoFocus?: boolean
 }
 
 const TiptapEditor = forwardRef<TiptapEditorHandle, Props>(function TiptapEditor(
-  { content, onChange, onSlashCommand, onBackspaceOnEmpty, onEditorFocus, onSelectionChange, onArrowDown, onArrowUp, placeholder = "Write something… (or type / for commands)", className, autoFocus = false },
+  { content, onChange, onSlashCommand, onBackspaceOnEmpty, onEditorFocus, onSelectionChange, onArrowDown, onArrowUp, onPasteFiles, placeholder = "Write something… (or type / for commands)", className, autoFocus = false },
   ref,
 ) {
   const [dropdown, setDropdown] = useState<DropdownState>(EMPTY_DROPDOWN)
@@ -445,6 +477,23 @@ const TiptapEditor = forwardRef<TiptapEditorHandle, Props>(function TiptapEditor
       attributes: {
         class: ["outline-none min-h-[1.5rem]", "text-[15px] leading-relaxed text-(--dk-ink)", className ?? ""].filter(Boolean).join(" "),
       },
+      handlePaste(_view, event) {
+        const clipboard = event.clipboardData
+        if (!clipboard) return false
+
+        const itemFiles = Array.from(clipboard.items)
+          .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+          .map((item) => item.getAsFile())
+          .filter((file): file is File => file !== null)
+        const imageFiles = itemFiles.length > 0
+          ? itemFiles
+          : Array.from(clipboard.files).filter((file) => file.type.startsWith("image/"))
+
+        if (imageFiles.length === 0) return false
+        event.preventDefault()
+        onPasteFiles?.(imageFiles)
+        return true
+      },
     },
     onUpdate({ editor }) {
       const html = editor.getHTML()
@@ -452,7 +501,16 @@ const TiptapEditor = forwardRef<TiptapEditorHandle, Props>(function TiptapEditor
     },
   })
 
-  useImperativeHandle(ref, () => ({ focus: () => { editor?.commands.focus("end") } }), [editor])
+  useImperativeHandle(
+    ref,
+    () => ({
+      focus: () => { editor?.commands.focus("end") },
+      insertHtmlAtEnd: (html: string) => {
+        editor?.chain().focus("end").insertContent(html).run()
+      },
+    }),
+    [editor],
+  )
 
   useEffect(() => {
     if (!editor) return

@@ -14,6 +14,8 @@ import FormAlert from "@/components/Form/FormAlert"
 import PrivacyPicker, {
   type PrivacyValue,
 } from "@/components/common/PrivacyPicker"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type ApiOk<T> = { message?: string; data?: T }
 
@@ -257,7 +259,7 @@ export default function EditEventPage() {
         </div>
 
         {loading && (
-          <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+          <LoadingRows rows={4} />
         )}
 
         {!loading && error && (
@@ -381,7 +383,7 @@ export default function EditEventPage() {
                 disabled={!canSave}
                 className="px-3 py-2 rounded-xl bg-(--dk-sky) text-white text-sm hover:opacity-95 transition disabled:opacity-60"
               >
-                {busy ? "Saving..." : "Save changes"}
+                {busy ? <LoadingSpinner size={16} /> : "Save changes"}
               </button>
             </div>
           </div>

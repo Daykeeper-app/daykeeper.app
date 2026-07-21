@@ -7,6 +7,7 @@ import FeedTimelineEmpty from "./FeedTimelineEmpty"
 import FeedUserDay from "./FeedUserDay"
 import { useDelayedRender } from "@/hooks/useDelayedRender"
 import FeedTimelineEnd from "./FeedTimelineEnd"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type Props = {
   data: FeedUserDayType[]
@@ -92,7 +93,7 @@ export default function FeedTimeline({
                 Failed to load more. Click to retry.
               </button>
             ) : loadingMore ? (
-              <p className="text-xs text-(--dk-slate)">Loading more…</p>
+              <LoadingSpinner size={16} />
             ) : !hasMore && data.length > 0 ? (
               <FeedTimelineEnd />
             ) : null}

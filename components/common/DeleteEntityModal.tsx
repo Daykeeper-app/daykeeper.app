@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Trash2 } from "lucide-react"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type DeleteEntityModalProps = {
   open: boolean
@@ -204,7 +205,7 @@ export default function DeleteEntityModal({
                   disabled={busy}
                   className="px-3 py-2 rounded-xl bg-(--dk-error) text-white text-sm hover:opacity-95 transition disabled:opacity-60"
                 >
-                  {busy ? "Deleting..." : confirmButtonTextFinal}
+                  {busy ? <LoadingSpinner size={16} /> : confirmButtonTextFinal}
                 </button>
               </div>
             </div>

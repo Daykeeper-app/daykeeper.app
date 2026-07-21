@@ -15,6 +15,7 @@ import PrivacyPicker, {
 } from "@/components/common/PrivacyPicker"
 import { useUploadQueue } from "@/lib/uploadQueue"
 import { toDDMMYYYY } from "@/lib/date"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 const MAX_FILES = 5
 
@@ -192,7 +193,7 @@ export default function CreatePostPage() {
             onClick={submit}
             disabled={busy || files.length > MAX_FILES || !trimmedData}
           >
-            {busy ? "Posting..." : "Create post"}
+            {busy ? <LoadingSpinner /> : "Create post"}
           </FormButton>
         </div>
       </div>

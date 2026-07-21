@@ -14,6 +14,8 @@ import PrivacyPicker, {
 import TaskCompletionToggle from "@/components/Task/TaskCompletionToggle"
 import { useDailyTasks } from "@/hooks/useDailyTasks"
 import { toDDMMYYYY } from "@/lib/date"
+import { CenteredSpinner, LoadingSpinner } from "@/components/common/LoadingIndicator"
+import { LoadingRows, PageSkeleton } from "@/components/common/LoadingSkeleton"
 
 type Privacy = PrivacyValue
 
@@ -273,7 +275,7 @@ function CreateTaskForm() {
               disabled={!canSave}
               className="rounded-lg bg-(--dk-sky) px-3 py-2 text-sm text-white transition hover:opacity-95 disabled:opacity-60"
             >
-              {busy ? "Saving..." : "Create task"}
+              {busy ? <LoadingSpinner size={16} /> : "Create task"}
             </button>
           </div>
 
@@ -290,9 +292,7 @@ function CreateTaskForm() {
             </div>
 
             {dailyLoading ? (
-              <div className="py-4 text-sm text-(--dk-slate)">
-                Loading templates...
-              </div>
+              <LoadingRows rows={3} className="px-0" />
             ) : dailyTasks.length === 0 ? (
               <div className="py-4 text-sm text-(--dk-slate)">
                 No daily task templates yet.
@@ -325,9 +325,7 @@ function CreateTaskForm() {
                 ))}
 
                 {dailyLoadingMore ? (
-                  <div className="py-3 text-sm text-(--dk-slate)">
-                    Loading more...
-                  </div>
+                  <CenteredSpinner className="py-3" />
                 ) : null}
               </div>
             )}
@@ -346,7 +344,7 @@ export default function CreateTaskPage() {
       fallback={
         <main className="pb-20 lg:pb-0">
           <div className="mx-auto min-h-screen max-w-3xl bg-(--dk-paper) lg:border-x lg:border-(--dk-ink)/10">
-            <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+            <PageSkeleton />
           </div>
         </main>
       }

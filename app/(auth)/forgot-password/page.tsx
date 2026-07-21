@@ -13,6 +13,7 @@ import FormButton from "@/components/Form/FormButton"
 import FormFooterLinks from "@/components/Form/FormFooterLinks"
 import FormLegalLinks from "@/components/Form/FormLegalLinks"
 import FormAlert from "@/components/Form/FormAlert"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 export default function ForgotPasswordPage() {
   const router = useRouter()
@@ -74,7 +75,7 @@ export default function ForgotPasswordPage() {
           />
 
           <FormButton type="submit" disabled={!canSubmit || loading}>
-            {loading ? "Sending..." : "Send code"}
+            {loading ? <LoadingSpinner /> : "Send code"}
           </FormButton>
 
           {info && <FormAlert>{info}</FormAlert>}

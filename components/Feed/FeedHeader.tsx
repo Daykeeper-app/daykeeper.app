@@ -188,7 +188,11 @@ export default function FeedHeader({
 
         <div className="mt-1 flex items-center justify-center gap-3 sm:mt-3">
           {loading ? (
-            <span className="text-xs text-(--dk-slate)">Loading…</span>
+            <span
+              role="status"
+              aria-label="Please wait"
+              className="h-3 w-32 animate-pulse rounded bg-(--dk-mist)"
+            />
           ) : error ? (
             <button
               onClick={onRetry}

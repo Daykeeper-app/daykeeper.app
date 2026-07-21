@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   Globe,
   Monitor,
+  ShieldCheck,
   Smartphone,
   Tablet,
   Terminal,
@@ -16,6 +17,11 @@ import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 import FormAlert from "@/components/Form/FormAlert"
 import { useSessions } from "@/hooks/useSessions"
+import {
+  CenteredSpinner,
+  LoadingSpinner,
+} from "@/components/common/LoadingIndicator"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
 
 function formatStamp(iso?: string) {
   if (!iso) return ""
@@ -73,6 +79,124 @@ function deviceIcon(deviceType: string, browser: string) {
   if (deviceType === "tablet") return <Tablet size={16} />
   if (deviceType === "desktop") return <Monitor size={16} />
   return <Globe size={16} />
+}
+
+type TrustedDevice = {
+  id: string
+  label?: string
+  ip?: string
+  userAgent?: string
+  lastUsedAt?: string
+  expiresAt?: string
+}
+
+function TrustedDevicesSection() {
+  const [items, setItems] = useState<TrustedDevice[]>([])
+  const [loading, setLoading] = useState(true)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function load() {
+    setLoading(true)
+    try {
+      const res = await apiFetch(`${API_URL}/sessions/trusted`)
+      if (!res.ok) throw new Error("Failed to load trusted devices")
+      const data = await res.json()
+      setItems(Array.isArray(data?.data) ? data.data : [])
+      setError(null)
+    } catch (e: any) {
+      setError(e?.message || "Failed to load trusted devices")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    load()
+  }, [])
+
+  async function revoke(id: string) {
+    if (busyId) return
+    setBusyId(id)
+    setError(null)
+    try {
+      const res = await apiFetch(`${API_URL}/sessions/trusted/${id}`, {
+        method: "DELETE",
+      })
+      if (!res.ok) throw new Error("Failed to remove trusted device")
+      setItems((prev) => prev.filter((d) => d.id !== id))
+    } catch (e: any) {
+      setError(e?.message || "Failed to remove trusted device")
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <section className="border-t border-(--dk-ink)/10 mt-2">
+      <div className="px-4 py-4">
+        <div className="flex items-center gap-2">
+          <ShieldCheck size={16} className="text-(--dk-ink)" />
+          <div className="text-sm font-semibold text-(--dk-ink)">
+            Trusted devices
+          </div>
+        </div>
+        <div className="text-xs text-(--dk-slate) mt-0.5">
+          These devices skip two-factor at login. Remove any you don’t
+          recognize — it will be asked for a code next time.
+        </div>
+      </div>
+
+      {error ? (
+        <div className="px-4 pb-3">
+          <FormAlert>{error}</FormAlert>
+        </div>
+      ) : null}
+
+      <div className="border-t border-(--dk-ink)/10">
+        {loading ? (
+          <LoadingRows rows={3} />
+        ) : items.length === 0 ? (
+          <div className="px-4 py-6 text-sm text-(--dk-slate)">
+            No trusted devices.
+          </div>
+        ) : (
+          <div className="divide-y divide-(--dk-ink)/10">
+            {items.map((d) => {
+              const parsed = parseUserAgent(d.userAgent)
+              return (
+                <div key={d.id} className="px-4 py-4 flex items-start gap-3">
+                  <div className="h-9 w-9 rounded-xl bg-(--dk-sky)/15 text-(--dk-ink) flex items-center justify-center">
+                    {deviceIcon(parsed.deviceType, parsed.browser)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-(--dk-ink)">
+                      {d.label || parsed.label}
+                    </div>
+                    <div className="text-xs text-(--dk-slate)">
+                      {d.ip || "Unknown IP"} • Last used{" "}
+                      {formatStamp(d.lastUsedAt)}
+                    </div>
+                    <div className="text-xs text-(--dk-slate)">
+                      Trusted until {formatStamp(d.expiresAt)}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => revoke(d.id)}
+                    disabled={busyId === d.id}
+                    className="text-xs text-(--dk-sky) hover:text-(--dk-ink) transition disabled:opacity-60"
+                  >
+                    {busyId === d.id ? <LoadingSpinner size={14} /> : "Remove"}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </section>
+  )
 }
 
 export default function DevicesPage() {
@@ -199,15 +323,13 @@ export default function DevicesPage() {
                 className="inline-flex items-center gap-2 rounded-xl border border-(--dk-error)/30 px-3 py-2 text-xs text-(--dk-error) bg-(--dk-error)/8 hover:bg-(--dk-error)/15 transition disabled:opacity-60"
               >
                 <Trash2 size={14} />
-                {revokeAllLoading ? "Revoking..." : "Revoke all"}
+                {revokeAllLoading ? <LoadingSpinner size={14} /> : "Revoke all"}
               </button>
             </div>
 
             <div className="border-t border-(--dk-ink)/10">
               {loading ? (
-                <div className="px-4 py-6 text-sm text-(--dk-slate)">
-                  Loading sessions...
-                </div>
+                <LoadingRows rows={4} />
               ) : items.length === 0 ? (
                 <div className="px-4 py-6 text-sm text-(--dk-slate)">
                   No sessions found.
@@ -245,7 +367,7 @@ export default function DevicesPage() {
                             disabled={busyId === session.id || revokeAllLoading}
                             className="text-xs text-(--dk-sky) hover:text-(--dk-ink) transition disabled:opacity-60"
                           >
-                            {busyId === session.id ? "Revoking..." : "Revoke"}
+                            {busyId === session.id ? <LoadingSpinner size={14} /> : "Revoke"}
                           </button>
                         </div>
                       </div>
@@ -253,9 +375,7 @@ export default function DevicesPage() {
                   })}
 
                   {loadingMore ? (
-                    <div className="px-4 py-4 text-sm text-(--dk-slate)">
-                      Loading more...
-                    </div>
+                    <CenteredSpinner className="px-4 py-4" />
                   ) : null}
                 </div>
               )}
@@ -267,6 +387,8 @@ export default function DevicesPage() {
               You’re all caught up.
             </div>
           ) : null}
+
+          <TrustedDevicesSection />
 
           <div ref={sentinelRef} className="h-1" />
         </div>

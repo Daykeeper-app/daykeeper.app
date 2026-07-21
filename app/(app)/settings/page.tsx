@@ -14,6 +14,7 @@ import {
   Monitor,
   Moon,
   Shield,
+  ShieldCheck,
   Smartphone,
   Sun,
   Users,
@@ -114,6 +115,12 @@ export default function SettingsPage() {
               subtitle="Update your login credentials"
               href="/settings/change-password"
               icon={<Lock size={18} />}
+            />
+            <SettingsRow
+              title="Two-factor authentication"
+              subtitle="Add a second step at login"
+              href="/settings/two-factor"
+              icon={<ShieldCheck size={18} />}
             />
             <SettingsRow
               title="Privacy"

@@ -291,8 +291,7 @@ export default function UserDayTasks({
         >
           {loadingMore ? (
             <>
-              <Loader2 size={16} className="animate-spin" />
-              Loading…
+              <Loader2 size={16} aria-label="Please wait" className="animate-spin" />
             </>
           ) : (
             <>

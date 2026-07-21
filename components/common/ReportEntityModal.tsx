@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react"
 import { Flag } from "lucide-react"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type ReportEntityModalProps = {
   open: boolean
@@ -301,7 +302,7 @@ export default function ReportEntityModal({
                   disabled={busy || !selected}
                   className="px-3 py-2 rounded-xl bg-(--dk-sky) text-white text-sm hover:opacity-95 transition disabled:opacity-60"
                 >
-                  {busy ? "Sending..." : submitButtonTextFinal}
+                  {busy ? <LoadingSpinner size={16} /> : submitButtonTextFinal}
                 </button>
               </div>
             </div>

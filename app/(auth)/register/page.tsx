@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useMemo, useState } from "react"
-import { Chrome } from "lucide-react"
+import { useCallback, useMemo, useState } from "react"
+import { completeAuthLogin } from "@/lib/completeAuth"
 
 import FormShell from "@/components/Form/FormShell"
 import FormLogo from "@/components/Form/FormLogo"
@@ -12,10 +12,11 @@ import FormHeader from "@/components/Form/FormHeader"
 import FormField from "@/components/Form/FormField"
 import FormButton from "@/components/Form/FormButton"
 import FormDivider from "@/components/Form/FormDivider"
-import FormSocialButton from "@/components/Form/FormSocialButton"
+import GoogleSignInButton from "@/components/Form/GoogleSignInButton"
 import FormFooterLinks from "@/components/Form/FormFooterLinks"
 import FormLegalLinks from "@/components/Form/FormLegalLinks"
 import FormAlert from "@/components/Form/FormAlert"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -72,6 +73,42 @@ export default function RegisterPage() {
       setLoading(false)
     }
   }
+
+  const onGoogleCredential = useCallback(
+    async (idToken: string) => {
+      setError(null)
+      setLoading(true)
+      try {
+        const res = await fetch("/api/auth/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken }),
+        })
+
+        const data = await res.json().catch(() => null)
+
+        if (!res.ok) {
+          setError(data?.error || "Google sign-in failed")
+          return
+        }
+
+        const token = data?.accessToken as string | undefined
+        if (!token) {
+          setError("Google sign-in returned no access token.")
+          return
+        }
+
+        await completeAuthLogin(token)
+        router.push("/")
+      } catch {
+        setError("Network error. Try again.")
+      } finally {
+        setLoading(false)
+      }
+    },
+    [router]
+  )
 
   return (
     <FormShell>
@@ -151,22 +188,18 @@ export default function RegisterPage() {
           </div>
 
           <FormButton type="submit" disabled={!canSubmit || loading}>
-            {loading ? "Creating..." : "Create account"}
+            {loading ? <LoadingSpinner /> : "Create account"}
           </FormButton>
 
           {error && <FormAlert>{error}</FormAlert>}
 
           <FormDivider />
 
-          <FormSocialButton
-            icon={<Chrome size={18} />}
-            onClick={() => {
-              // hook this to your Google OAuth start route later
-              window.location.href = "/api/auth/google"
-            }}
-          >
-            Continue with Google
-          </FormSocialButton>
+          <GoogleSignInButton
+            text="signup_with"
+            onCredential={onGoogleCredential}
+            onError={setError}
+          />
         </form>
       </FormCard>
 
