@@ -8,6 +8,7 @@ import { useMemo, useState } from "react"
 import { ChevronUp, ChevronDown } from "lucide-react"
 import ActionPill from "@/components/common/ActionPill"
 import SearchDayKindRow from "@/components/Search/SearchDayKindRow"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 function stableKey(id: unknown, index: number) {
   if (typeof id === "string" || typeof id === "number") return String(id)
@@ -98,8 +99,8 @@ export default function SearchDayKindResults({
           }}
           disabled={loadingMore}
         >
-          <ChevronDown size={16} />
-          {loadingMore ? "Loading…" : "Show more"}
+          {loadingMore ? <LoadingSpinner size={16} /> : <ChevronDown size={16} />}
+          {loadingMore ? null : "Show more"}
         </ActionPill>
       ) : null}
     </div>

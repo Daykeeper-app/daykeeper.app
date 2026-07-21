@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 export default function FetchUserButton() {
   const [loading, setLoading] = useState(false)
@@ -43,7 +44,7 @@ export default function FetchUserButton() {
         ].join(" ")}
         type="button"
       >
-        {loading ? "Fetching..." : "Fetch logged user"}
+        {loading ? <LoadingSpinner size={16} /> : "Fetch logged user"}
       </button>
 
       {error && (

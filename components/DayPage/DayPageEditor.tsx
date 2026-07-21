@@ -29,6 +29,7 @@ import {
   RotateCcw,
   ChevronUp,
   ChevronDown,
+  Sparkles,
 } from "lucide-react"
 import { useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/authClient"
@@ -37,6 +38,15 @@ import PrivacyPicker, { type PrivacyValue } from "@/components/common/PrivacyPic
 import TiptapEditor, { type TiptapEditorHandle, type SlashCommandType } from "@/components/common/TiptapEditor"
 import MediaLightbox from "@/components/Feed/MediaLightbox"
 import type { FeedMedia } from "@/lib/feedTypes"
+import DayStarter from "@/components/DayPage/DayStarter"
+import GuidedFlowModal from "@/components/DayPage/GuidedFlowModal"
+import {
+  dailyPlaceholder,
+  type DayTemplate,
+  type TemplateBlockSpec,
+  type GuidedAnswer,
+} from "@/lib/dayStarter/content"
+import { markdownToHtml } from "@/lib/dayStarter/markdown"
 
 type BlockType = "text" | "task" | "event" | "image"
 
@@ -55,6 +65,7 @@ type EditorBlock = {
   mediaUrl?: string
   mediaType?: "image" | "video"
   uploading?: boolean
+  pendingFile?: File
 }
 
 type Props = {
@@ -123,6 +134,11 @@ function blockFromRaw(raw: any, idx: number): EditorBlock {
   }
 }
 
+/** True when the page is just a single empty text block. */
+function isBlankPage(blocks: EditorBlock[]): boolean {
+  return blocks.length === 1 && blocks[0].type === "text" && !blocks[0].content
+}
+
 function makeTempBlock(type: BlockType, order: number, extras?: Partial<EditorBlock>): EditorBlock {
   const tempId = newTempId()
   return {
@@ -145,6 +161,15 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   const savingRef = useRef(false)
   const blocksRef = useRef<EditorBlock[]>([])
   const privacyRef = useRef<PrivacyValue>("public")
+  const revisionRef = useRef(0)
+  const draftUrlsRef = useRef(new Set<string>())
+  const knownImageBlockIdsRef = useRef(
+    new Set<string>(
+      ((initialPage?.blocks ?? []) as Array<{ _id?: string; id?: string; type?: string }>)
+        .filter((block) => block.type === "image" && isPersistedId(block._id ?? block.id))
+        .map((block) => String(block._id ?? block.id)),
+    ),
+  )
 
   const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
     const raw: any[] = initialPage?.blocks ?? []
@@ -168,6 +193,8 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   const dragCounterRef = useRef(0)
   const undoStack = useRef<EditorBlock[][]>([])
   const [canUndo, setCanUndo] = useState(false)
+  const [starterForced, setStarterForced] = useState(false)
+  const [guidedOpen, setGuidedOpen] = useState(false)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activeEditorRef = useRef<any>(null)
   const linkBtnRef = useRef<HTMLButtonElement>(null)
@@ -178,6 +205,14 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
 
   blocksRef.current = blocks
   privacyRef.current = privacy
+
+  useEffect(() => {
+    const draftUrls = draftUrlsRef.current
+    return () => {
+      draftUrls.forEach((url) => URL.revokeObjectURL(url))
+      draftUrls.clear()
+    }
+  }, [])
 
   // Keep inputRefs in sync with blocks length
   while (inputRefs.current.length < blocks.length) {
@@ -192,14 +227,89 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     savingRef.current = true
     setSaving(true)
     setSaveError(null)
+    const revisionAtStart = revisionRef.current
+    const pendingKeys = new Set<string>()
 
     try {
+      let draftBlocks = blocksRef.current
+      const pendingMedia = draftBlocks.filter(
+        (block) => block.type === "image" && !!block.pendingFile,
+      )
+
+      if (pendingMedia.length > 0) {
+        pendingMedia.forEach((block) => pendingKeys.add(block.stableKey))
+        setBlocks((prev) =>
+          prev.map((block) =>
+            pendingKeys.has(block.stableKey) ? { ...block, uploading: true } : block,
+          ),
+        )
+
+        const formData = new FormData()
+        pendingMedia.forEach((block) => formData.append("files", block.pendingFile!))
+        const uploadRes = await apiFetch(
+          `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/media`,
+          { method: "POST", body: formData },
+        )
+        if (!uploadRes.ok) {
+          const json = await uploadRes.json().catch(() => null)
+          throw new Error(json?.message || "Media upload failed")
+        }
+
+        const uploadJson = await uploadRes.json().catch(() => null)
+        const uploadedBlocks = uploadJson?.data?.blocks ?? []
+        const serverImages = [...uploadedBlocks]
+          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+          .map(blockFromRaw)
+          .filter((block) => block.type === "image")
+        const newlyUploaded = serverImages.filter(
+          (block) => !!block._id && !knownImageBlockIdsRef.current.has(block._id),
+        )
+        const replacements = newlyUploaded.slice(-pendingMedia.length)
+        if (replacements.length !== pendingMedia.length) {
+          throw new Error("The uploaded media could not be matched to this draft")
+        }
+
+        const replacementByKey = new Map(
+          pendingMedia.map((block, index) => [block.stableKey, replacements[index]]),
+        )
+        draftBlocks = draftBlocks.map((block) => {
+          const replacement = replacementByKey.get(block.stableKey)
+          if (!replacement) return block
+          if (block.mediaUrl && draftUrlsRef.current.has(block.mediaUrl)) {
+            URL.revokeObjectURL(block.mediaUrl)
+            draftUrlsRef.current.delete(block.mediaUrl)
+          }
+          return {
+            ...replacement,
+            stableKey: block.stableKey,
+            pendingFile: undefined,
+            uploading: false,
+          }
+        })
+        serverImages.forEach((block) => {
+          if (block._id) knownImageBlockIdsRef.current.add(block._id)
+        })
+        blocksRef.current = draftBlocks
+        setBlocks((prev) =>
+          prev.map((block) => {
+            const replacement = replacementByKey.get(block.stableKey)
+            return replacement
+              ? {
+                  ...replacement,
+                  stableKey: block.stableKey,
+                  pendingFile: undefined,
+                  uploading: false,
+                }
+              : block
+          }),
+        )
+      }
+
       let imagesSeen = 0
       const payload = {
         privacy: privacyRef.current,
-        blocks: blocksRef.current
+        blocks: draftBlocks
           .filter((b) => {
-            if (b.uploading) return false
             if (b.type === "image") {
               if (imagesSeen >= MAX_MEDIA) return false
               imagesSeen++
@@ -244,6 +354,11 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
       const serverSorted = [...savedBlocks]
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         .map(blockFromRaw)
+      serverSorted.forEach((block) => {
+        if (block.type === "image" && block._id) {
+          knownImageBlockIdsRef.current.add(block._id)
+        }
+      })
 
       // Background merge: update _id (temp → real) and image metadata only.
       // Never replace content/title/etc. so in-flight edits and editor focus
@@ -263,11 +378,19 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
           }
         }),
       )
-      setSavedOk(true)
-      setIsDirty(false)
+      const unchangedSincePublish = revisionRef.current === revisionAtStart
+      setSavedOk(unchangedSincePublish)
+      setIsDirty(!unchangedSincePublish)
+      undoStack.current = []
+      setCanUndo(false)
       void qc.invalidateQueries({ queryKey: ["dayPage"] })
       void qc.invalidateQueries({ queryKey: ["feed"] })
     } catch (err: any) {
+      setBlocks((prev) =>
+        prev.map((block) =>
+          pendingKeys.has(block.stableKey) ? { ...block, uploading: false } : block,
+        ),
+      )
       setSaveError(err?.message || "Failed to save. Please try again.")
     } finally {
       setSaving(false)
@@ -276,6 +399,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   }, [dateParam, qc])
 
   const scheduleSave = useCallback(() => {
+    revisionRef.current += 1
     setIsDirty(true)
     setSavedOk(false)
   }, [])
@@ -410,31 +534,65 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     [scheduleSave],
   )
 
+  // ── Empty-day starter (prompts / templates / guided flow) ─────────────────
+
+  function specToBlock(spec: TemplateBlockSpec, order: number): EditorBlock {
+    return spec.type === "task"
+      ? makeTempBlock("task", order, { title: spec.title })
+      : makeTempBlock("text", order, { content: markdownToHtml(spec.markdown) })
+  }
+
+  /** Blank page → replace the lone empty block; otherwise append at the end. */
+  function insertStarterBlocks(fresh: EditorBlock[]) {
+    pushUndo(blocksRef.current)
+    const focusIdx = isBlankPage(blocksRef.current) ? 0 : blocksRef.current.length
+    setBlocks((prev) =>
+      (isBlankPage(prev) ? fresh : [...prev, ...fresh]).map((b, i) => ({ ...b, order: i })),
+    )
+    scheduleSave()
+    setStarterForced(false)
+    setTimeout(() => inputRefs.current[focusIdx]?.current?.focus(), 30)
+  }
+
+  function insertPrompt(text: string) {
+    const html = markdownToHtml(`**${text}**\n`)
+    if (isBlankPage(blocksRef.current)) {
+      // Block 0's Tiptap editor is already mounted with empty content, and its
+      // content prop is initial-only — insert through the editor instance so
+      // the view updates (state sync + scheduleSave happen via onChange).
+      inputRefs.current[0]?.current?.insertHtmlAtEnd(html)
+      setStarterForced(false)
+    } else {
+      insertStarterBlocks([makeTempBlock("text", blocksRef.current.length, { content: html })])
+    }
+  }
+
+  function applyTemplate(tpl: DayTemplate) {
+    insertStarterBlocks(tpl.blocks.map((s, i) => specToBlock(s, i)))
+  }
+
+  function handleGuidedDone(answers: GuidedAnswer[]) {
+    setGuidedOpen(false)
+    if (answers.length === 0) return
+    insertStarterBlocks(
+      answers.map((a, i) =>
+        makeTempBlock("text", i, { content: markdownToHtml(`**${a.question}**\n${a.answer}`) }),
+      ),
+    )
+  }
+
   // ── Task toggle ───────────────────────────────────────────────────────────
 
-  async function toggleTask(idx: number) {
+  function toggleTask(idx: number) {
     const block = blocks[idx]
     if (!block) return
-    const newCompleted = !block.completed
-    update(idx, { completed: newCompleted })
-    if (isPersistedId(block._id)) {
-      await apiFetch(
-        `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/blocks/${block._id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ completed: newCompleted }),
-        },
-      ).catch(() => {})
-    }
+    update(idx, { completed: !block.completed })
   }
 
   // ── Media upload ──────────────────────────────────────────────────────────
 
   const imageBlocks = blocks.filter((b) => b.type === "image")
-  // Only count blocks that have a working URL — broken/stranded blocks shouldn't
-  // permanently prevent new uploads (they'll be purged on the next save anyway).
-  const canAddMedia = imageBlocks.filter((b) => !b.uploading && b.mediaUrl).length < MAX_MEDIA
+  const canAddMedia = imageBlocks.length < MAX_MEDIA
 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -460,60 +618,32 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     setLightboxOpen(true)
   }
 
-  async function handleMediaFiles(files: FileList | File[]) {
-    const fileArr = Array.from(files)
-    const persistedCount = imageBlocks.filter((b) => !b.uploading).length
-    const uploadingCount = imageBlocks.filter((b) => b.uploading).length
-    const slotsLeft = MAX_MEDIA - persistedCount - uploadingCount
+  function handleMediaFiles(files: FileList | File[]) {
+    const fileArr = Array.from(files).filter(
+      (file) => file.type.startsWith("image/") || file.type.startsWith("video/"),
+    )
+    const currentImageCount = blocksRef.current.filter((block) => block.type === "image").length
+    const slotsLeft = MAX_MEDIA - currentImageCount
     if (slotsLeft <= 0) return
 
-    const toUpload = fileArr.slice(0, slotsLeft)
-    const placeholderKeys = toUpload.map(() => newTempId())
+    const pendingBlocks = fileArr.slice(0, slotsLeft).map((file, index) => {
+      const key = newTempId()
+      const previewUrl = URL.createObjectURL(file)
+      draftUrlsRef.current.add(previewUrl)
+      return makeTempBlock("image", currentImageCount + index, {
+        _id: key,
+        stableKey: key,
+        mediaUrl: previewUrl,
+        mediaType: file.type.startsWith("video/") ? "video" : "image",
+        pendingFile: file,
+        uploading: false,
+      })
+    })
+    if (pendingBlocks.length === 0) return
 
-    setBlocks((prev) => [
-      ...prev,
-      ...placeholderKeys.map((key, i) =>
-        makeTempBlock("image", prev.length + i, { _id: key, stableKey: key, uploading: true }),
-      ),
-    ])
-
-    try {
-      const formData = new FormData()
-      toUpload.forEach((f) => formData.append("files", f))
-      const res = await apiFetch(
-        `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/media`,
-        { method: "POST", body: formData },
-      )
-      if (!res.ok) throw new Error("Upload failed")
-      const json = await res.json().catch(() => null)
-      const updatedBlocks: any[] = json?.data?.blocks ?? []
-      if (updatedBlocks.length > 0) {
-        const serverSorted = [...updatedBlocks]
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-          .map(blockFromRaw)
-        // Find newly added image blocks in the server response
-        setBlocks((prev) => {
-          const prevIds = new Set(prev.map((b) => b._id).filter(Boolean))
-          const newImageBlocks = serverSorted.filter(
-            (b) => b.type === "image" && !prevIds.has(b._id),
-          )
-          let newIdx = 0
-          return prev.map((b) => {
-            if (b.type === "image" && b.uploading && placeholderKeys.includes(b._id!)) {
-              return newImageBlocks[newIdx++] ?? b
-            }
-            return b
-          })
-        })
-        setSavedOk(true)
-        setIsDirty(false)
-        void qc.invalidateQueries({ queryKey: ["dayPage"] })
-        void qc.invalidateQueries({ queryKey: ["feed"] })
-      }
-    } catch {
-      setBlocks((prev) => prev.filter((b) => !placeholderKeys.includes(b._id!)))
-      setSaveError("Upload failed. Please try again.")
-    }
+    pushUndo(blocksRef.current)
+    setBlocks((prev) => [...prev, ...pendingBlocks].map((block, i) => ({ ...block, order: i })))
+    scheduleSave()
   }
 
   // ── Keyboard handlers ─────────────────────────────────────────────────────
@@ -742,6 +872,20 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
         <div className="flex items-center gap-1.5 shrink-0">
           <button
             type="button"
+            onClick={() => setStarterForced((v) => !v)}
+            title="Inspiration"
+            aria-label="Inspiration"
+            className={[
+              "flex h-6 w-6 items-center justify-center rounded transition",
+              starterForced
+                ? "bg-(--dk-sky)/15 text-(--dk-sky)"
+                : "text-(--dk-slate) hover:bg-(--dk-mist) hover:text-(--dk-ink)",
+            ].join(" ")}
+          >
+            <Sparkles size={13} />
+          </button>
+          <button
+            type="button"
             onClick={handleUndo}
             disabled={!canUndo}
             title="Undo (⌘Z)"
@@ -755,7 +899,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
           <button
             type="button"
             onClick={doSave}
-            disabled={saving}
+            disabled={saving || !isDirty}
             className="rounded-md bg-(--dk-sky) px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-(--dk-sky)/90 disabled:opacity-60"
           >
             {saving ? "Publishing…" : savedOk && !isDirty ? "Saved ✓" : "Publish"}
@@ -845,7 +989,8 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                     onSelectionChange={() => forceToolbarUpdate((v) => v + 1)}
                     onArrowDown={() => focusNextBlock(idx)}
                     onArrowUp={() => focusPrevBlock(idx)}
-                    placeholder="Write something…"
+                    onPasteFiles={handleMediaFiles}
+                    placeholder={idx === 0 ? dailyPlaceholder(dateParam) : "Write something…"}
                   />
                   <button
                     type="button"
@@ -971,6 +1116,15 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
 
           return null
         })}
+
+        {(isBlankPage(blocks) || starterForced) && (
+          <DayStarter
+            dateParam={dateParam}
+            onInsertPrompt={insertPrompt}
+            onApplyTemplate={applyTemplate}
+            onOpenGuided={() => setGuidedOpen(true)}
+          />
+        )}
       </div>
 
       {/* Media gallery */}
@@ -1006,7 +1160,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                 <p className="text-sm font-medium">
                   {isDragging ? "Drop to upload" : "Add photos & videos"}
                 </p>
-                <p className="text-xs opacity-60 mt-0.5">or drag and drop</p>
+                <p className="text-xs opacity-60 mt-0.5">or drag, drop, or paste an image</p>
               </div>
             </button>
           ) : (
@@ -1144,6 +1298,10 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
           onApply={applyLink}
           onClose={() => setLinkPopup(null)}
         />
+      )}
+
+      {guidedOpen && (
+        <GuidedFlowModal onClose={() => setGuidedOpen(false)} onDone={handleGuidedDone} />
       )}
 
       {lightboxMedia.length > 0 && (

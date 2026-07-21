@@ -10,6 +10,7 @@ import { useMe } from "@/lib/useMe"
 import { useCommentReplies } from "@/hooks/useCommentReplies"
 import RichText from "@/components/common/RichText"
 import RichTextarea from "@/components/common/RichTextarea"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 import { resolveProfilePictureUrl } from "@/lib/media"
 import { isSameUsername } from "@/lib/ownership"
 
@@ -272,7 +273,7 @@ export default function CommentItem({ c }: { c: PostComment }) {
                   disabled={replyBusy || !reply.trim()}
                   className="px-3 py-1.5 rounded-xl bg-(--dk-sky) text-white text-xs font-medium disabled:opacity-60"
                 >
-                  {replyBusy ? "Posting..." : "Reply"}
+                  {replyBusy ? <LoadingSpinner size={15} /> : "Reply"}
                 </button>
               </div>
             </div>
@@ -281,7 +282,14 @@ export default function CommentItem({ c }: { c: PostComment }) {
           {showReplies ? (
             <div className="mt-4 border-l border-(--dk-ink)/10 pl-4 space-y-3">
               {replies.loading ? (
-                <div className="text-xs text-(--dk-slate)">Loading replies…</div>
+                <div
+                  role="status"
+                  aria-label="Please wait"
+                  className="animate-pulse space-y-2"
+                >
+                  <div className="h-3 w-2/3 rounded bg-(--dk-mist)" />
+                  <div className="h-3 w-1/2 rounded bg-(--dk-mist)" />
+                </div>
               ) : replies.items.length === 0 ? (
                 <div className="text-xs text-(--dk-slate)">No replies yet.</div>
               ) : (
@@ -291,7 +299,7 @@ export default function CommentItem({ c }: { c: PostComment }) {
               )}
 
               {replies.loadingMore ? (
-                <div className="text-xs text-(--dk-slate)">Loading more…</div>
+                <LoadingSpinner size={14} />
               ) : null}
 
               {!replies.loading &&

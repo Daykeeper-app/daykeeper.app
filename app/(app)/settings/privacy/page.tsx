@@ -8,6 +8,7 @@ import FormAlert from "@/components/Form/FormAlert"
 import FormButton from "@/components/Form/FormButton"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type PrivacyMode = "public" | "private"
 
@@ -208,7 +209,7 @@ export default function PrivacyPage() {
 
           <div className="px-4 pt-4 sm:px-5">
             <FormButton type="button" onClick={onSave} disabled={loading}>
-            {loading ? "Saving..." : "Save privacy"}
+            {loading ? <LoadingSpinner /> : "Save privacy"}
             </FormButton>
           </div>
         </div>

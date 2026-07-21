@@ -12,6 +12,8 @@ import PrivacyPicker, {
   type PrivacyValue,
 } from "@/components/common/PrivacyPicker"
 import { toDDMMYYYY } from "@/lib/date"
+import { PageSkeleton } from "@/components/common/LoadingSkeleton"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type Privacy = PrivacyValue
 
@@ -362,7 +364,7 @@ function CreateEventForm() {
               disabled={!canSave}
               className="rounded-lg bg-(--dk-sky) px-3 py-2 text-sm text-white transition hover:opacity-95 disabled:opacity-60"
             >
-              {busy ? "Saving..." : "Create event"}
+              {busy ? <LoadingSpinner size={16} /> : "Create event"}
             </button>
           </div>
         </div>
@@ -377,7 +379,7 @@ export default function CreateEventPage() {
       fallback={
         <main className="pb-20 lg:pb-0">
           <div className="mx-auto min-h-screen max-w-3xl bg-(--dk-paper) lg:border-x lg:border-(--dk-ink)/10">
-            <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+            <PageSkeleton />
           </div>
         </main>
       }

@@ -16,6 +16,7 @@ import GoogleSignInButton from "@/components/Form/GoogleSignInButton"
 import FormFooterLinks from "@/components/Form/FormFooterLinks"
 import FormLegalLinks from "@/components/Form/FormLegalLinks"
 import FormAlert from "@/components/Form/FormAlert"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -187,7 +188,7 @@ export default function RegisterPage() {
           </div>
 
           <FormButton type="submit" disabled={!canSubmit || loading}>
-            {loading ? "Creating..." : "Create account"}
+            {loading ? <LoadingSpinner /> : "Create account"}
           </FormButton>
 
           {error && <FormAlert>{error}</FormAlert>}

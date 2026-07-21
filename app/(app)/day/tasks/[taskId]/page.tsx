@@ -27,6 +27,7 @@ import RichText from "@/components/common/RichText"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 import TaskCompletionToggle from "@/components/Task/TaskCompletionToggle"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
 
 type ApiOk<T> = { message?: string; data?: T }
 
@@ -202,7 +203,7 @@ export default function TaskPage() {
         </div>
 
         {loading && (
-          <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+          <LoadingRows rows={4} />
         )}
 
         {!loading && error && (

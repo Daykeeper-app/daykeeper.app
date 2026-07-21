@@ -1,12 +1,16 @@
 "use client"
 
+import Image from "next/image"
 import { Suspense, useMemo } from "react"
-import { useParams, useRouter, notFound } from "next/navigation"
+import { useParams, usePathname, useRouter, notFound } from "next/navigation"
 import { ArrowLeft } from "lucide-react"
 
 import ProfileDay from "@/components/User/ProfileDay"
 import ProfileDaySkeleton from "@/components/User/ProfileDaySkeleton"
 import { useUserProfile } from "@/hooks/useUserProfile"
+import { resolveProfilePictureUrl } from "@/lib/media"
+
+const AVATAR_FALLBACK = "/avatar-placeholder.png"
 
 function normalizeUsername(param: unknown) {
   const raw = Array.isArray(param) ? param[0] : param
@@ -16,22 +20,22 @@ function normalizeUsername(param: unknown) {
 }
 
 function UserDayPageInner() {
-  const params = useParams()
+  const params = useParams<{ user: string | string[] }>()
+  const pathname = usePathname()
   const router = useRouter()
 
   const username = useMemo(
-    () => normalizeUsername((params as any)?.user),
-    [params],
+    () => normalizeUsername(params?.user ?? pathname.split("/")[1]),
+    [params, pathname],
   )
+  const q = useUserProfile(username)
 
   if (!username) return notFound()
-
-  const q = useUserProfile(username)
-  const loading = q.isLoading
+  const loading = q.isPending || q.isLoading
   const user = q.data
   const error = q.error
 
-  if (!loading && (!user || error)) return notFound()
+  if (q.isFetched && (!user || error)) return notFound()
 
   return (
     <main className="pb-20 lg:pb-0">
@@ -47,12 +51,38 @@ function UserDayPageInner() {
             >
               <ArrowLeft size={18} className="text-(--dk-ink)" />
             </button>
-            <div className="leading-tight min-w-0">
-              <div className="text-sm font-semibold text-(--dk-ink) truncate">
-                @{username}
+            {user ? (
+              <button
+                type="button"
+                onClick={() => router.push(`/${user.username}`)}
+                className="flex min-w-0 items-center gap-3 rounded-lg py-1 pr-2 text-left transition hover:opacity-80"
+                aria-label={`Open ${user.displayName || user.username}'s profile`}
+              >
+                <Image
+                  src={resolveProfilePictureUrl(user, AVATAR_FALLBACK)}
+                  alt=""
+                  width={36}
+                  height={36}
+                  className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                />
+                <span className="min-w-0 leading-tight">
+                  <span className="block truncate text-sm font-semibold text-(--dk-ink)">
+                    {user.displayName || user.username}
+                  </span>
+                  <span className="block truncate text-xs text-(--dk-slate)">
+                    @{user.username} · Day page
+                  </span>
+                </span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-3" aria-label="Loading profile">
+                <div className="h-9 w-9 animate-pulse rounded-lg bg-(--dk-mist)" />
+                <div className="space-y-1.5">
+                  <div className="h-3.5 w-24 animate-pulse rounded bg-(--dk-mist)" />
+                  <div className="h-3 w-20 animate-pulse rounded bg-(--dk-mist)" />
+                </div>
               </div>
-              <div className="text-xs text-(--dk-slate)">Day Page</div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -72,7 +102,7 @@ export default function UserDayPage() {
       fallback={
         <main className="pb-20 lg:pb-0">
           <div className="mx-auto min-h-screen max-w-3xl bg-(--dk-paper) lg:border-x lg:border-(--dk-ink)/10">
-            <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+            <ProfileDaySkeleton />
           </div>
         </main>
       }

@@ -238,7 +238,18 @@ export default function RightPanel() {
             </div>
 
             {loading ? (
-              <p className="px-3 py-2 text-sm text-(--dk-slate)">Loading…</p>
+              <div
+                role="status"
+                aria-label="Please wait"
+                className="animate-pulse space-y-2 px-3 py-2"
+              >
+                {Array.from({ length: 3 }).map((_, index) => (
+                  <div key={index} className="flex items-center gap-2.5">
+                    <div className="h-6 w-6 rounded-md bg-(--dk-mist)" />
+                    <div className="h-3 flex-1 rounded bg-(--dk-mist)" />
+                  </div>
+                ))}
+              </div>
             ) : topNotifications.length === 0 ? (
               <p className="px-3 py-2 text-sm text-(--dk-slate)">No notifications yet.</p>
             ) : (

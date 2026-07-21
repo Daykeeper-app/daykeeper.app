@@ -7,7 +7,7 @@ import PostsHeader from "@/components/User/PostsHeader"
 import ProfileDaySkeleton from "@/components/User/ProfileDaySkeleton"
 import DayPageEditor from "@/components/DayPage/DayPageEditor"
 import DayPageBlocksView from "@/components/DayPage/DayPageBlocksView"
-import DayPageLikeBar from "@/components/DayPage/DayPageLikeBar"
+import DayPageEngagement from "@/components/DayPage/DayPageEngagement"
 
 import { useUserProfile } from "@/hooks/useUserProfile"
 import { useOwnDayPage, useUserDayPage } from "@/hooks/useDayPage"
@@ -26,7 +26,7 @@ export default function ProfileDaySections({ username, className }: Props) {
 
   const urlDateParam = searchParams.get("date")
 
-  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+  const [localSelectedDate, setSelectedDate] = useState<Date>(() => {
     if (typeof window !== "undefined") {
       const sp = new URLSearchParams(window.location.search)
       const raw = sp.get("date")
@@ -35,6 +35,11 @@ export default function ProfileDaySections({ username, className }: Props) {
     }
     return startOfDay(new Date())
   })
+
+  const selectedDate = useMemo(() => {
+    const parsedUrlDate = urlDateParam ? parseDDMMYYYY(urlDateParam) : null
+    return parsedUrlDate ? startOfDay(parsedUrlDate) : localSelectedDate
+  }, [localSelectedDate, urlDateParam])
 
   const dateParam = useMemo(() => toDDMMYYYY(selectedDate), [selectedDate])
 
@@ -45,10 +50,9 @@ export default function ProfileDaySections({ username, className }: Props) {
 
   // Only enable the relevant hook after user profile resolves
   const ownPageQ = useOwnDayPage(user != null && isSelf ? dateParam : "")
-  const userPageQ = useUserDayPage(
-    user != null && !isSelf ? username : null,
-    dateParam,
-  )
+  // Fetch the social projection for owners too: the own-page endpoint is an
+  // editor shell and intentionally does not include likes or comment counts.
+  const userPageQ = useUserDayPage(user != null ? username : null, dateParam)
 
   const pageLoading = user != null
     ? (isSelf ? ownPageQ.isLoading : userPageQ.isLoading)
@@ -66,15 +70,6 @@ export default function ProfileDaySections({ username, className }: Props) {
     },
     [router, pathname, searchParams],
   )
-
-  useEffect(() => {
-    if (!urlDateParam) return
-    const parsed = parseDDMMYYYY(urlDateParam)
-    if (!parsed) return
-    setSelectedDate((prev) =>
-      isSameDay(prev, parsed) ? prev : startOfDay(parsed),
-    )
-  }, [urlDateParam])
 
   useEffect(() => {
     if (typeof window === "undefined") return
@@ -102,7 +97,7 @@ export default function ProfileDaySections({ username, className }: Props) {
   const readyToShowSkeleton = useDelayedRender(200)
   const showSkeleton = loading && readyToShowSkeleton
 
-  const page = isSelf ? ownPageQ.data : userPageQ.data
+  const page = isSelf ? (userPageQ.data ?? ownPageQ.data) : userPageQ.data
 
   return (
     <section className={className}>
@@ -137,14 +132,28 @@ export default function ProfileDaySections({ username, className }: Props) {
               </div>
             </div>
           ) : isSelf ? (
-            <DayPageEditor dateParam={dateParam} initialPage={ownPageQ.data} />
+            <>
+              <DayPageEditor dateParam={dateParam} initialPage={ownPageQ.data} />
+              {userPageQ.data?._id ? (
+                <DayPageEngagement
+                  key={userPageQ.data._id}
+                  pageId={userPageQ.data._id}
+                  pageOwnerUsername={username}
+                  likesCount={userPageQ.data.likesCount ?? 0}
+                  commentsCount={userPageQ.data.commentsCount ?? 0}
+                  userLiked={!!userPageQ.data.userLiked}
+                />
+              ) : null}
+            </>
           ) : (
             <div>
               {page ? (
                 <>
                   <DayPageBlocksView blocks={page.blocks ?? []} />
-                  <DayPageLikeBar
+                  <DayPageEngagement
+                    key={page._id}
                     pageId={page._id}
+                    pageOwnerUsername={username}
                     likesCount={page.likesCount ?? 0}
                     commentsCount={page.commentsCount ?? 0}
                     userLiked={!!page.userLiked}

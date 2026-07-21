@@ -12,6 +12,7 @@ import {
 } from "lucide-react"
 import { useDelayedRender } from "@/hooks/useDelayedRender"
 import type { NotificationItem } from "@/hooks/useNotifications"
+import { CenteredSpinner } from "@/components/common/LoadingIndicator"
 
 const ICONS: Record<string, ReactNode> = {
   new_follower: <UserPlus size={16} />,
@@ -228,9 +229,7 @@ export default function NotificationsList({
       ))}
 
       {loadingMore ? (
-        <div className="px-4 py-4 text-sm text-(--dk-slate) sm:px-5">
-          Loading more…
-        </div>
+        <CenteredSpinner className="px-4 py-4 sm:px-5" />
       ) : null}
 
       {!loading && !loadingMore && !hasMore && items.length > 0 ? (

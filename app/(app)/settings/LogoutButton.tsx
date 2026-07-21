@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 export default function LogoutButton({
   className,
@@ -36,7 +37,7 @@ export default function LogoutButton({
       ].join(" ")}
       type="button"
     >
-      {loading ? "Logging out..." : children}
+      {loading ? <LoadingSpinner size={16} /> : children}
     </button>
   )
 }

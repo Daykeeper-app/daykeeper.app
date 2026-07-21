@@ -23,6 +23,7 @@ import PrivacyChip from "@/components/common/PrivacyChip"
 import DeleteEntityModal from "@/components/common/DeleteEntityModal"
 import formatDDMMYYYY from "@/utils/formatDate"
 import RichText from "@/components/common/RichText"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
 
 function pad2(n: number) {
   return String(n).padStart(2, "0")
@@ -146,7 +147,7 @@ export default function EventPage() {
         </div>
 
         {loading && (
-          <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+          <LoadingRows rows={4} />
         )}
 
         {!loading && error && (

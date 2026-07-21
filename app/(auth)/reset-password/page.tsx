@@ -12,6 +12,8 @@ import FormField from "@/components/Form/FormField"
 import FormButton from "@/components/Form/FormButton"
 import FormLegalLinks from "@/components/Form/FormLegalLinks"
 import FormAlert from "@/components/Form/FormAlert"
+import AuthLoading from "@/components/Auth/AuthLoading"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 const RESEND_COOLDOWN = 120 // seconds
 
@@ -168,7 +170,7 @@ function ResetPasswordForm() {
           />
 
           <FormButton type="submit" disabled={!canSubmit || loading}>
-            {loading ? "Updating..." : "Update password"}
+            {loading ? <LoadingSpinner /> : "Update password"}
           </FormButton>
 
           {error && <FormAlert>{error}</FormAlert>}
@@ -198,16 +200,7 @@ function ResetPasswordForm() {
 export default function ResetPasswordPage() {
   return (
     <Suspense
-      fallback={
-        <FormShell>
-          <FormLogo />
-          <FormCard>
-            <FormHeader title="Create a new password" subtitle="Loading…" />
-            <div className="text-sm text-(--dk-slate)">Preparing…</div>
-          </FormCard>
-          <FormLegalLinks />
-        </FormShell>
-      }
+      fallback={<AuthLoading />}
     >
       <ResetPasswordForm />
     </Suspense>

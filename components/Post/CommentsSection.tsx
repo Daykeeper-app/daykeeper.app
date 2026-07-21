@@ -6,6 +6,8 @@ import { usePostComments } from "@/hooks/usePostComments"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 import RichTextarea from "@/components/common/RichTextarea"
+import { CenteredSpinner, LoadingSpinner } from "@/components/common/LoadingIndicator"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
 
 export default function CommentsSection({ postId }: { postId: string }) {
   const {
@@ -123,15 +125,13 @@ export default function CommentsSection({ postId }: { postId: string }) {
             disabled={busy || !text.trim()}
             className="px-3 py-1.5 rounded-xl bg-(--dk-sky) text-white text-xs font-medium disabled:opacity-60"
           >
-            {busy ? "Posting..." : "Post"}
+            {busy ? <LoadingSpinner size={15} /> : "Post"}
           </button>
         </div>
       </div>
 
       {loadingFirst && (
-        <div className="px-4 pb-6 text-sm text-(--dk-slate)">
-          Loading comments…
-        </div>
+        <LoadingRows rows={3} className="pt-2" />
       )}
 
       {!loadingFirst && items.length === 0 && !error && (
@@ -151,7 +151,7 @@ export default function CommentsSection({ postId }: { postId: string }) {
       <div ref={sentinelRef} className="h-px w-full" />
 
       {loadingMore && (
-        <div className="px-4 py-4 text-sm text-(--dk-slate)">Loading more…</div>
+        <CenteredSpinner className="px-4 py-4" />
       )}
 
       {!loading && !loadingMore && !hasMore && items.length > 0 && (

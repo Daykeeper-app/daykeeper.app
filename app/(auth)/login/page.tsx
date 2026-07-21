@@ -16,6 +16,8 @@ import GoogleSignInButton from "@/components/Form/GoogleSignInButton"
 import FormFooterLinks from "@/components/Form/FormFooterLinks"
 import FormLegalLinks from "@/components/Form/FormLegalLinks"
 import FormAlert from "@/components/Form/FormAlert"
+import AuthLoading from "@/components/Auth/AuthLoading"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 function LoginForm() {
   const router = useRouter()
@@ -57,6 +59,17 @@ function LoginForm() {
 
       if (!res.ok) {
         setError(data?.error || "Invalid email or password")
+        return
+      }
+
+      // Second factor required — continue on the dedicated 2FA screen.
+      if (data?.twoFactorRequired) {
+        const q = new URLSearchParams({
+          challengeId: String(data.challengeId),
+          method: String(data.method || "email"),
+        })
+        if (data.email) q.set("email", String(data.email))
+        router.push(`/two-factor?${q.toString()}`)
         return
       }
 
@@ -165,7 +178,7 @@ function LoginForm() {
           {error ? <FormAlert>{error}</FormAlert> : null}
 
           <FormButton type="submit" disabled={!canSubmit}>
-            {loading ? "Logging in..." : "Log in"}
+            {loading ? <LoadingSpinner /> : "Log in"}
           </FormButton>
 
           <FormDivider />
@@ -191,16 +204,7 @@ function LoginForm() {
 export default function LoginPage() {
   return (
     <Suspense
-      fallback={
-        <FormShell>
-          <FormLogo />
-          <FormCard>
-            <FormHeader title="Welcome back" subtitle="Loading…" />
-            <div className="text-sm text-(--dk-slate)">Preparing…</div>
-          </FormCard>
-          <FormLegalLinks />
-        </FormShell>
-      }
+      fallback={<AuthLoading />}
     >
       <LoginForm />
     </Suspense>

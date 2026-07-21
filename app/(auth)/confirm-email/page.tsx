@@ -13,6 +13,8 @@ import FormButton from "@/components/Form/FormButton"
 import FormFooterLinks from "@/components/Form/FormFooterLinks"
 import FormLegalLinks from "@/components/Form/FormLegalLinks"
 import FormAlert from "@/components/Form/FormAlert"
+import AuthLoading from "@/components/Auth/AuthLoading"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 const RESEND_COOLDOWN = 120 // seconds
 
@@ -24,6 +26,7 @@ function ConfirmEmailForm() {
   const [code, setCode] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   // resend timer
   const [cooldown, setCooldown] = useState(0)
@@ -44,6 +47,7 @@ function ConfirmEmailForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setNotice(null)
     if (!canSubmit) return
 
     setLoading(true)
@@ -79,10 +83,11 @@ function ConfirmEmailForm() {
     if (cooldown > 0 || !email) return
 
     setError(null)
+    setNotice(null)
     setLoading(true)
 
     try {
-      const res = await fetch("/api/auth/resend_code", {
+      const res = await fetch("/api/auth/resend-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -95,7 +100,8 @@ function ConfirmEmailForm() {
         return
       }
 
-      // start cooldown only on success
+      setCode("")
+      setNotice(data?.message || `A new code was sent to ${email}.`)
       setCooldown(RESEND_COOLDOWN)
     } catch {
       setError("Network error. Try again.")
@@ -140,16 +146,17 @@ function ConfirmEmailForm() {
               autoComplete: "one-time-code",
               placeholder: "123456",
               value: code,
-              onChange: (e: any) =>
+              onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
                 setCode(e.target.value.replace(/[^\d\s]/g, "")),
             }}
           />
 
           <FormButton type="submit" disabled={!canSubmit || loading}>
-            {loading ? "Confirming..." : "Confirm email"}
+            {loading ? <LoadingSpinner /> : "Confirm email"}
           </FormButton>
 
           {error && <FormAlert>{error}</FormAlert>}
+          {notice && <FormAlert type="success">{notice}</FormAlert>}
 
           <div className="flex items-center justify-between text-sm">
             <button
@@ -181,19 +188,7 @@ function ConfirmEmailForm() {
 export default function ConfirmEmailPage() {
   return (
     <Suspense
-      fallback={
-        <FormShell>
-          <FormLogo />
-          <FormCard>
-            <FormHeader
-              title="Confirm your email"
-              subtitle="Loading…"
-            />
-            <div className="text-sm text-(--dk-slate)">Preparing…</div>
-          </FormCard>
-          <FormLegalLinks />
-        </FormShell>
-      }
+      fallback={<AuthLoading />}
     >
       <ConfirmEmailForm />
     </Suspense>

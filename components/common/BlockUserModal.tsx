@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Ban } from "lucide-react"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 type Props = {
   username: string
@@ -125,7 +126,7 @@ export default function BlockUserModal({ username, open, onClose }: Props) {
                   className="px-3 py-2 rounded-xl text-white text-sm hover:opacity-95 transition disabled:opacity-60"
                   style={{ background: "var(--dk-error)" }}
                 >
-                  {busy ? "Blocking..." : "Block user"}
+                  {busy ? <LoadingSpinner size={16} /> : "Block user"}
                 </button>
               </div>
             </div>

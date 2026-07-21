@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 
 import FeedHeader from "@/components/Feed/FeedHeader"
 import FeedTimeline from "@/components/Feed/FeedTimeline"
+import FeedTimelineSkeleton from "@/components/Feed/FeedTimelineSkeleton"
 import UploadStatusBar from "@/components/Post/UploadStatusBar"
 import { useFeed } from "@/hooks/useFeed"
 import { toDDMMYYYY, parseDDMMYYYY, isSameDay, startOfDay } from "@/lib/date"
@@ -120,7 +121,7 @@ export default function FeedPage() {
       fallback={
         <main className="pb-20 lg:pb-0">
           <div className="mx-auto min-h-screen max-w-3xl bg-(--dk-paper) lg:border-x lg:border-(--dk-ink)/10">
-            <div className="px-4 py-6 text-sm text-(--dk-slate)">Loading…</div>
+            <FeedTimelineSkeleton />
           </div>
         </main>
       }

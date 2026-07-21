@@ -100,8 +100,7 @@ export default function UserDayPosts({
       <div className="pt-2 flex justify-center">
         {loadingMore ? (
           <div className="px-4 py-2 rounded-xl border border-(--dk-ink)/10 bg-(--dk-paper) text-sm font-medium text-(--dk-sky) inline-flex items-center gap-2">
-            <Loader2 size={16} className="animate-spin" />
-            Loading more…
+            <Loader2 size={16} aria-label="Please wait" className="animate-spin" />
           </div>
         ) : hasMore ? (
           <div className="px-4 py-2 rounded-xl border border-(--dk-ink)/10 bg-(--dk-paper) text-sm font-medium text-(--dk-slate)">

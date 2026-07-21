@@ -9,6 +9,7 @@ import FormButton from "@/components/Form/FormButton"
 import FormAlert from "@/components/Form/FormAlert"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 export default function ChangePasswordPage() {
   const router = useRouter()
@@ -139,7 +140,7 @@ export default function ChangePasswordPage() {
 
             <div className="px-4 pt-2">
               <FormButton type="submit" disabled={!canSubmit || loading}>
-                {loading ? "Updating..." : "Update password"}
+                {loading ? <LoadingSpinner /> : "Update password"}
               </FormButton>
             </div>
           </form>

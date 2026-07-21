@@ -9,6 +9,8 @@ import AvatarPicker from "@/components/User/Profile/AvatarPicker"
 import TimeZonePicker from "@/components/User/Profile/TimeZonePicker"
 import { TIME_ZONES } from "@/lib/utils/timezones"
 import { useEditProfile } from "@/hooks/useEditProfile"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
+import { LoadingSpinner } from "@/components/common/LoadingIndicator"
 
 export default function EditProfileForm() {
   const p = useEditProfile()
@@ -40,7 +42,7 @@ export default function EditProfileForm() {
         </div>
 
         {p.loading && (
-          <div className="px-4 py-6 text-sm text-(--dk-slate) sm:px-5">Loading…</div>
+          <LoadingRows rows={4} />
         )}
 
         {!p.loading && p.error && (
@@ -131,7 +133,7 @@ export default function EditProfileForm() {
               </FormButton>
 
               <FormButton type="submit" disabled={!p.dirty || p.saving}>
-                {p.saving ? "Saving..." : "Save changes"}
+                {p.saving ? <LoadingSpinner /> : "Save changes"}
               </FormButton>
             </div>
           </form>

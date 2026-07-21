@@ -21,15 +21,23 @@ export async function POST(req: Request) {
     )
   }
 
-  const res = await fetch(`${API_URL}/auth/confirm-email`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      email,
-      verificationCode: code,
-      ...(deviceId ? { deviceId } : {}),
-    }),
-  })
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}/auth/confirm_email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email.toLowerCase(),
+        verificationCode: code,
+        ...(deviceId ? { deviceId } : {}),
+      }),
+    })
+  } catch {
+    return NextResponse.json(
+      { error: "Confirmation service is temporarily unavailable" },
+      { status: 503 },
+    )
+  }
 
   const data = await res.json().catch(() => null)
 

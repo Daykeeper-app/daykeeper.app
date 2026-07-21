@@ -12,6 +12,8 @@ import FormAlert from "@/components/Form/FormAlert"
 import { AVATAR_FALLBACK } from "@/components/Search/searchUtils"
 import { resolveProfilePictureUrl } from "@/lib/media"
 import RichText from "@/components/common/RichText"
+import { CenteredSpinner, LoadingSpinner } from "@/components/common/LoadingIndicator"
+import { LoadingRows } from "@/components/common/LoadingSkeleton"
 
 export default function BlocksPage() {
   const router = useRouter()
@@ -136,9 +138,7 @@ export default function BlocksPage() {
 
           <section className="mt-2">
             {loading ? (
-              <div className="px-4 py-6 text-sm text-(--dk-slate) sm:px-5">
-                Loading blocked accounts...
-              </div>
+              <LoadingRows rows={5} />
             ) : items.length === 0 ? (
               <div className="px-4 py-6 text-sm text-(--dk-slate) sm:px-5">
                 You haven&apos;t blocked anyone.
@@ -187,7 +187,7 @@ export default function BlocksPage() {
                         >
                           <ShieldOff size={14} />
                           {isBusy
-                            ? "Saving..."
+                            ? <LoadingSpinner size={14} />
                             : isBlocked
                               ? "Unblock"
                               : "Block"}
@@ -198,9 +198,7 @@ export default function BlocksPage() {
                 })}
 
                 {loadingMore ? (
-                  <div className="px-4 py-4 text-sm text-(--dk-slate) sm:px-5">
-                    Loading more...
-                  </div>
+                  <CenteredSpinner className="px-4 py-4 sm:px-5" />
                 ) : null}
               </div>
             )}

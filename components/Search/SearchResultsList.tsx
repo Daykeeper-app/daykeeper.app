@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react"
 import type { SearchType } from "@/hooks/useSearch"
 import SearchResultsSwitch from "@/components/Search/SearchResultsSwitch"
+import { CenteredSpinner } from "@/components/common/LoadingIndicator"
 
 export default function SearchResultsList({
   items,
@@ -49,9 +50,7 @@ export default function SearchResultsList({
       />
 
       {loadingMore ? (
-        <div className="px-4 pb-6 text-center text-sm text-(--dk-slate) sm:px-5">
-          Loading more…
-        </div>
+        <CenteredSpinner className="px-4 pb-6 sm:px-5" />
       ) : null}
 
       {!hasMore && items.length ? (
