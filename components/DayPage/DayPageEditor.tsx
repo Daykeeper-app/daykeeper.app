@@ -34,7 +34,14 @@ import { useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
 import TiptapEditor, { type TiptapEditorHandle, type SlashCommandType } from "@/components/common/TiptapEditor"
+import DayStarter from "@/components/DayPage/DayStarter"
 import MediaLightbox from "@/components/Feed/MediaLightbox"
+import {
+  dailyPlaceholder,
+  type DayTemplate,
+  type GuidedAnswer,
+  type TemplateBlockSpec,
+} from "@/lib/dayStarter/content"
 import type {
   DayPage,
   DayPageBlock,
@@ -155,6 +162,49 @@ function makeTempBlock(type: BlockType, order: number, extras?: Partial<EditorBl
     description: type === "event" ? "" : undefined,
     ...extras,
   }
+}
+
+function escapeHtml(text: string) {
+  return text
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;")
+}
+
+function promptHtml(text: string) {
+  return `<p><strong>${escapeHtml(text)}</strong></p><p></p>`
+}
+
+function markdownStarterHtml(markdown: string) {
+  const lines = markdown.split("\n")
+  const html: string[] = []
+  let listItems: string[] = []
+
+  function flushList() {
+    if (listItems.length === 0) return
+    html.push(`<ul>${listItems.map((item) => `<li><p>${item}</p></li>`).join("")}</ul>`)
+    listItems = []
+  }
+
+  for (const line of lines) {
+    if (line.startsWith("- ")) {
+      listItems.push(escapeHtml(line.slice(2)))
+      continue
+    }
+    flushList()
+    const bold = line.match(/^\*\*(.+)\*\*$/)
+    html.push(bold ? `<p><strong>${escapeHtml(bold[1])}</strong></p>` : `<p>${escapeHtml(line)}</p>`)
+  }
+  flushList()
+  return html.join("")
+}
+
+function templateSpecToBlock(spec: TemplateBlockSpec, order: number) {
+  return spec.type === "task"
+    ? makeTempBlock("task", order, { title: spec.title })
+    : makeTempBlock("text", order, { content: markdownStarterHtml(spec.markdown) })
 }
 
 
@@ -706,6 +756,35 @@ export default function DayPageEditor({
 
   const hasContent = hasPublishableContent(blocks)
 
+  function replaceBlankPage(fresh: EditorBlock[]) {
+    pushUndo(blocksRef.current)
+    blocksRef.current = fresh
+    setBlocks(fresh)
+    scheduleSave()
+    setTimeout(() => inputRefs.current[0]?.current?.focus(), 20)
+  }
+
+  function insertPrompt(text: string) {
+    replaceBlankPage([
+      makeTempBlock("text", 0, { content: promptHtml(text) }),
+    ])
+  }
+
+  function applyTemplate(template: DayTemplate) {
+    replaceBlankPage(template.blocks.map(templateSpecToBlock))
+  }
+
+  function applyGuidedAnswers(answers: GuidedAnswer[]) {
+    if (answers.length === 0) return
+    replaceBlankPage(
+      answers.map((answer, index) =>
+        makeTempBlock("text", index, {
+          content: `<p><strong>${escapeHtml(answer.question)}</strong></p><p>${escapeHtml(answer.answer).replaceAll("\n", "<br>")}</p>`,
+        }),
+      ),
+    )
+  }
+
   return (
     <div>
       <input
@@ -878,7 +957,7 @@ export default function DayPageEditor({
                     onSelectionChange={() => forceToolbarUpdate((v) => v + 1)}
                     onArrowDown={() => focusNextBlock(idx)}
                     onArrowUp={() => focusPrevBlock(idx)}
-                    placeholder="Write something…"
+                    placeholder={isFirst ? dailyPlaceholder(dateParam) : "Write something…"}
                   />
                   <button
                     type="button"
@@ -1004,6 +1083,16 @@ export default function DayPageEditor({
 
           return null
         })}
+
+        {!hasContent ? (
+          <DayStarter
+            key={dateParam}
+            dateParam={dateParam}
+            onInsertPrompt={insertPrompt}
+            onApplyTemplate={applyTemplate}
+            onGuidedDone={applyGuidedAnswers}
+          />
+        ) : null}
       </div>
 
       {/* Media gallery */}
