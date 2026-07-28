@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import PostsHeader from "@/components/User/PostsHeader"
-import DayPageEditor from "@/components/DayPage/DayPageEditor"
+import DayPageTimelineEditor from "@/components/DayPage/DayPageTimelineEditor"
 import ProfileDaySkeleton from "@/components/User/ProfileDaySkeleton"
 import { useOwnDayPage } from "@/hooks/useDayPage"
 import { isSameDay, parseDDMMYYYY, startOfDay, toDDMMYYYY } from "@/lib/date"
@@ -23,6 +23,7 @@ function DayPageInner() {
     }
     return startOfDay(new Date())
   })
+  const [editorDirty, setEditorDirty] = useState(false)
 
   const dateParam = useMemo(() => toDDMMYYYY(selectedDate), [selectedDate])
   const { data: page, isLoading } = useOwnDayPage(dateParam)
@@ -31,13 +32,20 @@ function DayPageInner() {
 
   const setDate = useCallback(
     (d: Date) => {
+      if (
+        editorDirty &&
+        !window.confirm("Discard your unpublished entry and open another day?")
+      ) {
+        return
+      }
       const next = startOfDay(d)
+      setEditorDirty(false)
       setSelectedDate(next)
       const qs = new URLSearchParams(searchParams.toString())
       qs.set("date", toDDMMYYYY(next))
       router.replace(`/day?${qs.toString()}`, { scroll: false })
     },
-    [router, searchParams],
+    [editorDirty, router, searchParams],
   )
 
   const changeDate = useCallback(
@@ -77,14 +85,19 @@ function DayPageInner() {
           isToday={isToday}
           loading={isLoading}
           error={null}
-          usersCount={page?.blocks?.length ?? 0}
+          usersCount={page?.entries?.length ?? 0}
           onRetry={() => setDate(selectedDate)}
         />
 
         {isLoading ? (
           <ProfileDaySkeleton />
         ) : (
-          <DayPageEditor key={dateParam} dateParam={dateParam} initialPage={page} />
+          <DayPageTimelineEditor
+            key={dateParam}
+            dateParam={dateParam}
+            initialPage={page}
+            onDirtyChange={setEditorDirty}
+          />
         )}
       </div>
     </main>

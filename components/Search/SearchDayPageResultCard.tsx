@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Heart, MessageCircle } from "lucide-react"
-import DayPageBlocksView from "@/components/DayPage/DayPageBlocksView"
+import DayPageEntriesView from "@/components/DayPage/DayPageEntriesView"
 import { resolveProfilePictureUrl } from "@/lib/media"
 
 const AVATAR_FALLBACK = "/avatar-placeholder.png"
@@ -77,9 +77,13 @@ export default function SearchDayPageResultCard({ page }: { page: any }) {
         </div>
       </div>
 
-      {/* Preview blocks */}
-      {Array.isArray(page.blocks) && page.blocks.length > 0 ? (
-        <DayPageBlocksView blocks={page.blocks} maxBlocks={2} />
+      {/* Preview entries */}
+      {Array.isArray(page.entries) && page.entries.length > 0 ? (
+        <DayPageEntriesView
+          entries={page.entries}
+          maxEntries={1}
+          maxBlocksPerEntry={2}
+        />
       ) : (
         <div className="text-xs italic text-(--dk-slate) px-4 py-1">No content</div>
       )}

@@ -19,7 +19,7 @@ export default function FeedUserDayCard({
   const meta = useMemo(() => {
     if (page) {
       return {
-        blocksCount: Array.isArray(page.blocks) ? page.blocks.length : 0,
+        entriesCount: Array.isArray(page.entries) ? page.entries.length : 0,
         likesCount: page.likesCount ?? 0,
         commentsCount: page.commentsCount ?? 0,
         userLiked: !!page.userLiked,
@@ -59,9 +59,9 @@ export default function FeedUserDayCard({
             <span className="inline-flex items-center gap-1.5">
               <FileText size={13} />
               <span className="font-semibold text-(--dk-ink)">
-                {meta.blocksCount}
+                {meta.entriesCount}
               </span>{" "}
-              block{meta.blocksCount !== 1 ? "s" : ""}
+              entr{meta.entriesCount === 1 ? "y" : "ies"}
             </span>
 
             <span className="h-1 w-1 rounded-full bg-(--dk-ink)/25" />

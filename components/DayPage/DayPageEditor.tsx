@@ -33,10 +33,14 @@ import {
 import { useQueryClient } from "@tanstack/react-query"
 import { apiFetch } from "@/lib/authClient"
 import { API_URL } from "@/config"
-import PrivacyPicker, { type PrivacyValue } from "@/components/common/PrivacyPicker"
 import TiptapEditor, { type TiptapEditorHandle, type SlashCommandType } from "@/components/common/TiptapEditor"
 import MediaLightbox from "@/components/Feed/MediaLightbox"
-import type { FeedMedia } from "@/lib/feedTypes"
+import type {
+  DayPage,
+  DayPageBlock,
+  DayPageEntry,
+  FeedMedia,
+} from "@/lib/feedTypes"
 
 type BlockType = "text" | "task" | "event" | "image"
 
@@ -57,9 +61,14 @@ type EditorBlock = {
   uploading?: boolean
 }
 
+type FocusableBlockHandle = TiptapEditorHandle | HTMLInputElement
+
 type Props = {
   dateParam: string
-  initialPage: any
+  entry?: DayPageEntry | null
+  maxMedia?: number
+  onSaved: (page: DayPage, entryId: string) => void
+  onDirtyChange?: (dirty: boolean) => void
 }
 
 const MAX_MEDIA = 5
@@ -71,6 +80,16 @@ function newTempId() {
 
 function isPersistedId(id?: string) {
   return !!id && !id.startsWith("_new_")
+}
+
+function hasPublishableContent(blocks: EditorBlock[]) {
+  return blocks.some(
+    (block) =>
+      (block.type === "text" && !!block.content?.replace(/<[^>]*>/g, "").trim()) ||
+      (block.type === "task" && !!block.title?.trim()) ||
+      (block.type === "event" && !!block.title?.trim()) ||
+      (block.type === "image" && !!block.mediaId && !block.uploading),
+  )
 }
 
 function ToolbarBtn({
@@ -104,8 +123,8 @@ function ToolbarBtn({
   )
 }
 
-function blockFromRaw(raw: any, idx: number): EditorBlock {
-  const id = raw._id ?? raw.id ?? newTempId()
+function blockFromRaw(raw: DayPageBlock, idx: number): EditorBlock {
+  const id = raw._id || newTempId()
   return {
     stableKey: id,
     _id: id,
@@ -139,15 +158,21 @@ function makeTempBlock(type: BlockType, order: number, extras?: Partial<EditorBl
 }
 
 
-export default function DayPageEditor({ dateParam, initialPage }: Props) {
+export default function DayPageEditor({
+  dateParam,
+  entry = null,
+  maxMedia = MAX_MEDIA,
+  onSaved,
+  onDirtyChange,
+}: Props) {
   const qc = useQueryClient()
   const mediaInputRef = useRef<HTMLInputElement>(null)
   const savingRef = useRef(false)
   const blocksRef = useRef<EditorBlock[]>([])
-  const privacyRef = useRef<PrivacyValue>("public")
+  const [entryVersion, setEntryVersion] = useState(entry?.version ?? 0)
 
   const [blocks, setBlocks] = useState<EditorBlock[]>(() => {
-    const raw: any[] = initialPage?.blocks ?? []
+    const raw: DayPageBlock[] = entry?.blocks ?? []
     const sorted = [...raw].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)).map(blockFromRaw)
     // Always provide at least one editable text block at the top
     const hasEditableBlock = sorted.some((b) => b.type !== "image")
@@ -156,9 +181,6 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     }
     return sorted
   })
-  const [privacy, setPrivacy] = useState<PrivacyValue>(
-    (initialPage?.privacy as PrivacyValue) ?? "public",
-  )
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [savedOk, setSavedOk] = useState(false)
@@ -173,15 +195,17 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   const linkBtnRef = useRef<HTMLButtonElement>(null)
   const [linkPopup, setLinkPopup] = useState<{ title: string; url: string; rect: DOMRect } | null>(null)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const inputRefs = useRef<Array<React.RefObject<any>>>([])
+  const inputRefs = useRef<Array<React.RefObject<FocusableBlockHandle | null>>>([])
 
   blocksRef.current = blocks
-  privacyRef.current = privacy
+
+  useEffect(() => {
+    onDirtyChange?.(isDirty)
+  }, [isDirty, onDirtyChange])
 
   // Keep inputRefs in sync with blocks length
   while (inputRefs.current.length < blocks.length) {
-    inputRefs.current.push(createRef())
+    inputRefs.current.push(createRef<FocusableBlockHandle>())
   }
   inputRefs.current.length = blocks.length
 
@@ -196,12 +220,11 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     try {
       let imagesSeen = 0
       const payload = {
-        privacy: privacyRef.current,
         blocks: blocksRef.current
           .filter((b) => {
             if (b.uploading) return false
             if (b.type === "image") {
-              if (imagesSeen >= MAX_MEDIA) return false
+              if (imagesSeen >= maxMedia) return false
               imagesSeen++
             }
             return true
@@ -223,57 +246,75 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
             if (b.type === "image" && b.mediaId) out.mediaId = b.mediaId
             return out
           }),
+        ...(entry ? { version: entryVersion } : {}),
       }
 
-      const res = await apiFetch(
-        `${API_URL}/day-pages/${encodeURIComponent(dateParam)}`,
-        {
-          method: "PUT",
+      const endpoint = entry
+        ? `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/entries/${encodeURIComponent(entry._id)}`
+        : `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/entries`
+
+      const save = (force = false) =>
+        apiFetch(endpoint, {
+          method: entry ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        },
-      )
+          body: JSON.stringify(force ? { ...payload, force: true } : payload),
+        })
+
+      let res = await save()
 
       if (!res.ok) {
         const json = await res.json().catch(() => null)
-        throw new Error(json?.message || `Failed (${res.status})`)
+        if (
+          res.status === 409 &&
+          json?.conflict &&
+          window.confirm(
+            "This entry changed on another device. Press OK to overwrite it with your current draft, or Cancel to keep your draft without saving.",
+          )
+        ) {
+          res = await save(true)
+          if (!res.ok) {
+            const forcedJson = await res.json().catch(() => null)
+            throw new Error(forcedJson?.message || `Failed (${res.status})`)
+          }
+        } else {
+          throw new Error(json?.message || `Failed (${res.status})`)
+        }
       }
 
       const json = await res.json().catch(() => null)
-      const savedBlocks: any[] = json?.data?.blocks ?? []
+      const savedEntries: DayPageEntry[] = json?.data?.entries ?? []
+      const savedEntry = entry
+        ? savedEntries.find((candidate) => candidate._id === entry._id)
+        : savedEntries[0]
+      if (!savedEntry) throw new Error("The published entry was not returned by the server.")
+      const savedBlocks: DayPageBlock[] = savedEntry.blocks ?? []
       const serverSorted = [...savedBlocks]
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         .map(blockFromRaw)
 
-      // Background merge: update _id (temp → real) and image metadata only.
-      // Never replace content/title/etc. so in-flight edits and editor focus
-      // are fully preserved (Notion / Google Docs style).
-      setBlocks((prev) =>
-        prev.map((prevBlock, i) => {
-          const s = serverSorted[i]
-          if (!s) return prevBlock
-          return {
-            ...prevBlock,
-            _id: s._id,
-            // stableKey intentionally unchanged — preserves the React key so
-            // Tiptap never unmounts/remounts and focus is never lost.
-            ...(prevBlock.type === "image"
-              ? { mediaUrl: s.mediaUrl, mediaType: s.mediaType, mediaId: s.mediaId, uploading: false }
-              : {}),
-          }
-        }),
-      )
+      const canonicalBlocks = serverSorted.some((block) => block.type !== "image")
+        ? serverSorted
+        : [makeTempBlock("text", 0), ...serverSorted.map((block, index) => ({
+            ...block,
+            order: index + 1,
+          }))]
+      blocksRef.current = canonicalBlocks
+      setBlocks(canonicalBlocks)
       setSavedOk(true)
       setIsDirty(false)
+      setEntryVersion(savedEntry.version)
+      onSaved(json.data, savedEntry._id)
       void qc.invalidateQueries({ queryKey: ["dayPage"] })
       void qc.invalidateQueries({ queryKey: ["feed"] })
-    } catch (err: any) {
-      setSaveError(err?.message || "Failed to save. Please try again.")
+    } catch (err: unknown) {
+      setSaveError(
+        err instanceof Error ? err.message : "Failed to save. Please try again.",
+      )
     } finally {
       setSaving(false)
       savingRef.current = false
     }
-  }, [dateParam, qc])
+  }, [dateParam, entry, entryVersion, maxMedia, onSaved, qc])
 
   const scheduleSave = useCallback(() => {
     setIsDirty(true)
@@ -372,7 +413,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
           if (target) {
             target.focus()
             if ("setSelectionRange" in target) {
-              const len = (target as HTMLTextAreaElement).value.length
+              const len = target.value.length
               target.setSelectionRange(len, len)
             }
           }
@@ -417,16 +458,6 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     if (!block) return
     const newCompleted = !block.completed
     update(idx, { completed: newCompleted })
-    if (isPersistedId(block._id)) {
-      await apiFetch(
-        `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/blocks/${block._id}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ completed: newCompleted }),
-        },
-      ).catch(() => {})
-    }
   }
 
   // ── Media upload ──────────────────────────────────────────────────────────
@@ -434,7 +465,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
   const imageBlocks = blocks.filter((b) => b.type === "image")
   // Only count blocks that have a working URL — broken/stranded blocks shouldn't
   // permanently prevent new uploads (they'll be purged on the next save anyway).
-  const canAddMedia = imageBlocks.filter((b) => !b.uploading && b.mediaUrl).length < MAX_MEDIA
+  const canAddMedia = imageBlocks.filter((b) => !b.uploading && b.mediaUrl).length < maxMedia
 
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
@@ -464,7 +495,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     const fileArr = Array.from(files)
     const persistedCount = imageBlocks.filter((b) => !b.uploading).length
     const uploadingCount = imageBlocks.filter((b) => b.uploading).length
-    const slotsLeft = MAX_MEDIA - persistedCount - uploadingCount
+    const slotsLeft = maxMedia - persistedCount - uploadingCount
     if (slotsLeft <= 0) return
 
     const toUpload = fileArr.slice(0, slotsLeft)
@@ -481,34 +512,31 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
       const formData = new FormData()
       toUpload.forEach((f) => formData.append("files", f))
       const res = await apiFetch(
-        `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/media`,
+        `${API_URL}/day-pages/${encodeURIComponent(dateParam)}/media/stage`,
         { method: "POST", body: formData },
       )
       if (!res.ok) throw new Error("Upload failed")
       const json = await res.json().catch(() => null)
-      const updatedBlocks: any[] = json?.data?.blocks ?? []
-      if (updatedBlocks.length > 0) {
-        const serverSorted = [...updatedBlocks]
-          .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-          .map(blockFromRaw)
-        // Find newly added image blocks in the server response
+      const stagedMedia: FeedMedia[] = json?.data?.media ?? []
+      if (stagedMedia.length > 0) {
         setBlocks((prev) => {
-          const prevIds = new Set(prev.map((b) => b._id).filter(Boolean))
-          const newImageBlocks = serverSorted.filter(
-            (b) => b.type === "image" && !prevIds.has(b._id),
-          )
           let newIdx = 0
           return prev.map((b) => {
             if (b.type === "image" && b.uploading && placeholderKeys.includes(b._id!)) {
-              return newImageBlocks[newIdx++] ?? b
+              const media = stagedMedia[newIdx++]
+              if (!media) return b
+              return {
+                ...b,
+                mediaId: media._id,
+                mediaUrl: media?.urls?.main ?? media?.url,
+                mediaType: media?.type === "video" ? "video" : "image",
+                uploading: false,
+              }
             }
             return b
           })
         })
-        setSavedOk(true)
-        setIsDirty(false)
-        void qc.invalidateQueries({ queryKey: ["dayPage"] })
-        void qc.invalidateQueries({ queryKey: ["feed"] })
+        scheduleSave()
       }
     } catch {
       setBlocks((prev) => prev.filter((b) => !placeholderKeys.includes(b._id!)))
@@ -676,14 +704,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
     if (files.length) handleMediaFiles(files)
   }
 
-  const contentBlocks = blocks.filter((b) => b.type !== "image")
-  const hasContent =
-    contentBlocks.some(
-      (b) =>
-        (b.type === "text" && b.content) ||
-        (b.type === "task" && b.title) ||
-        (b.type === "event" && b.title),
-    ) || imageBlocks.length > 0
+  const hasContent = hasPublishableContent(blocks)
 
   return (
     <div>
@@ -726,7 +747,11 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                 <button
                   ref={linkBtnRef}
                   type="button"
-                  onMouseDown={(e) => { e.preventDefault(); isLink ? ae?.chain().focus().unsetLink().run() : openLinkPopup() }}
+                  onMouseDown={(e) => {
+                    e.preventDefault()
+                    if (isLink) ae?.chain().focus().unsetLink().run()
+                    else openLinkPopup()
+                  }}
                   title={isLink ? "Remove link" : "Insert link"}
                   className={[
                     "flex h-6 w-6 items-center justify-center rounded transition-colors",
@@ -755,10 +780,18 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
           <button
             type="button"
             onClick={doSave}
-            disabled={saving}
+            disabled={saving || !hasContent || (!!entry && !isDirty)}
             className="rounded-md bg-(--dk-sky) px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-(--dk-sky)/90 disabled:opacity-60"
           >
-            {saving ? "Publishing…" : savedOk && !isDirty ? "Saved ✓" : "Publish"}
+            {saving
+              ? entry
+                ? "Saving…"
+                : "Publishing…"
+              : savedOk && !isDirty
+                ? "Saved ✓"
+                : entry
+                  ? "Save changes"
+                  : "Publish"}
           </button>
         </div>
       </div>
@@ -768,7 +801,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
         {blocks.map((block, idx) => {
           if (block.type === "image") return null
 
-          const ref = inputRefs.current[idx] as React.RefObject<any>
+          const ref = inputRefs.current[idx]
 
           const contentBlocks = blocks.filter((b) => b.type !== "image")
           const posInContent = contentBlocks.findIndex((b) => b.stableKey === block.stableKey)
@@ -877,7 +910,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                   )}
                 </button>
                 <input
-                  ref={ref}
+                  ref={ref as React.RefObject<HTMLInputElement | null>}
                   type="text"
                   value={block.title ?? ""}
                   onChange={(e) => update(idx, { title: e.target.value })}
@@ -909,7 +942,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
                     <Calendar size={14} className="shrink-0 text-(--dk-sky) mt-0.5" />
                     <div className="flex-1 min-w-0 space-y-1.5">
                       <input
-                        ref={ref}
+                        ref={ref as React.RefObject<HTMLInputElement | null>}
                         type="text"
                         value={block.title ?? ""}
                         onChange={(e) => update(idx, { title: e.target.value })}
@@ -985,7 +1018,7 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
           <div className="flex items-center justify-between mb-2.5">
             <span className="text-xs font-medium text-(--dk-slate)">Photos &amp; Videos</span>
             <span className="text-[11px] text-(--dk-slate)/50">
-              {imageBlocks.filter((b) => !b.uploading && b.mediaUrl).length}/{MAX_MEDIA}
+              {imageBlocks.filter((b) => !b.uploading && b.mediaUrl).length}/{maxMedia}
             </span>
           </div>
 
@@ -1128,11 +1161,6 @@ export default function DayPageEditor({ dateParam, initialPage }: Props) {
             Event
           </button>
         </div>
-        <PrivacyPicker
-          compact
-          value={privacy}
-          onChange={(v) => { setPrivacy(v); scheduleSave() }}
-        />
       </div>
 
       {/* Link popup */}

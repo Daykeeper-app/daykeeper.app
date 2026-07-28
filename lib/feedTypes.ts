@@ -46,11 +46,23 @@ export type DayPageBlock = {
   media?: {
     _id?: string
     key?: string
+    type?: string
+    url?: string
     urls?: {
       main?: string
       thumb?: string
     } | null
   }
+}
+
+export type DayPageEntry = {
+  _id: string
+  publishedAt: string
+  createdAt: string
+  updatedAt: string
+  version: number
+  edited: boolean
+  blocks: DayPageBlock[]
 }
 
 export type DayPage = {
@@ -60,6 +72,7 @@ export type DayPage = {
   date: string
   privacy: string
   blocks: DayPageBlock[]
+  entries: DayPageEntry[]
   status: string
   likesCount: number
   commentsCount: number
@@ -176,6 +189,18 @@ function normalizeBlock(raw: any): DayPageBlock {
   }
 }
 
+function normalizeEntry(raw: any): DayPageEntry {
+  return {
+    _id: stableFeedId(raw?._id) ?? "",
+    publishedAt: String(raw?.publishedAt ?? ""),
+    createdAt: String(raw?.createdAt ?? raw?.publishedAt ?? ""),
+    updatedAt: String(raw?.updatedAt ?? raw?.createdAt ?? raw?.publishedAt ?? ""),
+    version: Math.max(1, Number(raw?.version ?? 1)),
+    edited: !!raw?.edited,
+    blocks: Array.isArray(raw?.blocks) ? raw.blocks.map(normalizeBlock) : [],
+  }
+}
+
 function normalizeDayPage(raw: any): DayPage | null {
   if (!raw) return null
   return {
@@ -185,6 +210,7 @@ function normalizeDayPage(raw: any): DayPage | null {
     date: raw.date ?? "",
     privacy: raw.privacy ?? "public",
     blocks: Array.isArray(raw.blocks) ? raw.blocks.map(normalizeBlock) : [],
+    entries: Array.isArray(raw.entries) ? raw.entries.map(normalizeEntry) : [],
     status: raw.status ?? "public",
     likesCount: Number(raw.likesCount ?? 0),
     commentsCount: Number(raw.commentsCount ?? 0),

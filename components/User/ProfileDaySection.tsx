@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, ChevronRight, Pencil } from "lucide-react"
 
-import DayPageBlocksView from "@/components/DayPage/DayPageBlocksView"
+import DayPageEntriesView from "@/components/DayPage/DayPageEntriesView"
 import DayPageLikeBar from "@/components/DayPage/DayPageLikeBar"
 import ProfileDaySkeleton from "@/components/User/ProfileDaySkeleton"
 import { useOwnDayPage, useUserDayPage } from "@/hooks/useDayPage"
@@ -86,12 +86,12 @@ export default function ProfileDaySection({
         <ProfileDaySkeleton />
       ) : page ? (
         <div>
-          <DayPageBlocksView blocks={page.blocks ?? []} />
+          <DayPageEntriesView entries={page.entries ?? []} />
           <div className="border-t border-(--dk-ink)/8">
             {isSelf ? (
               <div className="flex items-center justify-between px-3 py-2">
                 <span className="text-xs text-(--dk-slate)">
-                  {(page.blocks ?? []).length} block{(page.blocks ?? []).length !== 1 ? "s" : ""}
+                  {(page.entries ?? []).length} entr{(page.entries ?? []).length === 1 ? "y" : "ies"}
                 </span>
                 <button
                   type="button"

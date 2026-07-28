@@ -10,6 +10,24 @@ const mediaSrc = isDev
   ? "media-src 'self' blob: https: http://localhost:* http://127.0.0.1:*"
   : "media-src 'self' blob: https:"
 
+function configuredApiOrigin() {
+  try {
+    return process.env.NEXT_PUBLIC_API_URL
+      ? new URL(process.env.NEXT_PUBLIC_API_URL).origin
+      : null
+  } catch {
+    return null
+  }
+}
+
+const connectSrc = [
+  "'self'",
+  "https://daykeeper-api.onrender.com",
+  "http://localhost:3001",
+  "http://127.0.0.1:3001",
+  configuredApiOrigin(),
+].filter(Boolean).join(" ")
+
 const securityHeaders = [
   {
     key: "Content-Security-Policy",
@@ -21,7 +39,7 @@ const securityHeaders = [
       imgSrc,
       mediaSrc,
       "font-src 'self' data:",
-      "connect-src 'self' https://daykeeper-api.onrender.com http://localhost:3001 http://127.0.0.1:3001",
+      `connect-src ${connectSrc}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

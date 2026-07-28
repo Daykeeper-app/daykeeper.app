@@ -5,8 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation"
 
 import PostsHeader from "@/components/User/PostsHeader"
 import ProfileDaySkeleton from "@/components/User/ProfileDaySkeleton"
-import DayPageEditor from "@/components/DayPage/DayPageEditor"
-import DayPageBlocksView from "@/components/DayPage/DayPageBlocksView"
+import DayPageTimelineEditor from "@/components/DayPage/DayPageTimelineEditor"
+import DayPageEntriesView from "@/components/DayPage/DayPageEntriesView"
 import DayPageLikeBar from "@/components/DayPage/DayPageLikeBar"
 
 import { useUserProfile } from "@/hooks/useUserProfile"
@@ -35,6 +35,7 @@ export default function ProfileDaySections({ username, className }: Props) {
     }
     return startOfDay(new Date())
   })
+  const [editorDirty, setEditorDirty] = useState(false)
 
   const dateParam = useMemo(() => toDDMMYYYY(selectedDate), [selectedDate])
 
@@ -58,13 +59,20 @@ export default function ProfileDaySections({ username, className }: Props) {
 
   const setDate = useCallback(
     (d: Date) => {
+      if (
+        editorDirty &&
+        !window.confirm("Discard your unpublished entry and open another day?")
+      ) {
+        return
+      }
       const next = startOfDay(d)
+      setEditorDirty(false)
       setSelectedDate(next)
       const qs = new URLSearchParams(searchParams.toString())
       qs.set("date", toDDMMYYYY(next))
       router.replace(`${pathname}?${qs.toString()}`, { scroll: false })
     },
-    [router, pathname, searchParams],
+    [editorDirty, router, pathname, searchParams],
   )
 
   useEffect(() => {
@@ -113,7 +121,7 @@ export default function ProfileDaySections({ username, className }: Props) {
         isToday={isToday}
         loading={loading}
         error={error}
-        usersCount={page?.blocks?.length ?? 0}
+        usersCount={page?.entries?.length ?? 0}
         onRetry={() => setDate(selectedDate)}
       />
 
@@ -137,12 +145,17 @@ export default function ProfileDaySections({ username, className }: Props) {
               </div>
             </div>
           ) : isSelf ? (
-            <DayPageEditor dateParam={dateParam} initialPage={ownPageQ.data} />
+            <DayPageTimelineEditor
+              key={dateParam}
+              dateParam={dateParam}
+              initialPage={ownPageQ.data}
+              onDirtyChange={setEditorDirty}
+            />
           ) : (
             <div>
               {page ? (
                 <>
-                  <DayPageBlocksView blocks={page.blocks ?? []} />
+                  <DayPageEntriesView entries={page.entries ?? []} />
                   <DayPageLikeBar
                     pageId={page._id}
                     likesCount={page.likesCount ?? 0}

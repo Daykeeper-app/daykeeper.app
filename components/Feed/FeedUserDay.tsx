@@ -4,7 +4,7 @@ import Image from "next/image"
 import { useEffect, useRef, useState } from "react"
 import FeedPostItem from "./FeedPostItem"
 import FeedUserDayItemRow from "./FeedUserDayItemRow"
-import DayPageBlocksView from "@/components/DayPage/DayPageBlocksView"
+import DayPageEntriesView from "@/components/DayPage/DayPageEntriesView"
 import DayPageLikeBar from "@/components/DayPage/DayPageLikeBar"
 import { MoreHorizontal, Flag, Ban, ArrowRight } from "lucide-react"
 import BlockUserModal from "../common/BlockUserModal"
@@ -157,7 +157,11 @@ export default function FeedUserDay({
             onClick={() => router.push(dayUrl)}
             className="w-full text-left rounded-xl transition-colors hover:bg-(--dk-mist)/30 focus-visible:outline-none"
           >
-            <DayPageBlocksView blocks={page.blocks ?? []} maxBlocks={4} />
+            <DayPageEntriesView
+              entries={page.entries ?? []}
+              maxEntries={2}
+              maxBlocksPerEntry={3}
+            />
 
             {/* View full page CTA */}
             <div className="flex items-center gap-1.5 pb-2 pt-1 text-xs font-medium text-(--dk-sky)/80">
